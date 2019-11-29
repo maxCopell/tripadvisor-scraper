@@ -1,0 +1,83 @@
+{
+  "title": "TripAdvisor API/Scrapper input",
+  "description": "To unleashed the full power of the scrapper/API use the options bellow!",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "locationFullName": {
+      "title": "Location",
+      "type": "string",
+      "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location",
+      "default": "Prague",
+      "editor": "textfield"
+    },
+    "locationId": {
+      "title": "Location id",
+      "type": "string",
+      "description": "Id of location",
+      "default": "",
+      "editor": "hidden"
+    },
+    "lastReviewDate": {
+      "title": "Reviews since date",
+      "type": "string",
+      "description": "It is a date where the scrapper stops loading older reviews ",
+      "default": "2019-01-01",
+      "prefill": "2019-01-01",
+      "editor": "textfield"
+    },
+    "includeRestaurants": {
+      "title": "Include restaurants",
+      "type": "boolean",
+      "description": "If checked results includes restaurants for given location.",
+      "default": true,
+      "groupCaption": "Options",
+      "groupDescription": "Information that will be included"
+    },
+    "includeAttractions": {
+      "title": "Include things to do [BETA]",
+      "type": "boolean",
+      "description": "If checked results includes hotels for given location.",
+      "default": false
+    },
+    "includeHotels": {
+      "title": "Include Hotels",
+      "type": "boolean",
+      "description": "If checked results includes hotels for given location.",
+      "default": true
+    },
+    "includeReviews": {
+      "title": "Include reviews",
+      "type": "boolean",
+      "description": "If checked results includes reviews data",
+      "default": false
+    },
+    "hotelId": {
+      "title": "Hotel id",
+      "type": "string",
+      "description": "Id of hotel",
+      "editor": "hidden"
+    },
+    "restaurantId": {
+      "title": "Restaurant id",
+      "type": "string",
+      "description": "Id of restaurant",
+      "editor": "hidden"
+    },
+    "checkInDate": {
+      "title": "Check in date",
+      "type": "string",
+      "description": "Hotel rooms prices will be calculated for this date",
+      "editor": "textfield"
+    },
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Optionaly use Apify Proxy",
+      "prefill": { "useApifyProxy": true },
+      "default": { "useApifyProxy": true },
+      "editor": "proxy"
+    }
+  },
+  "required": ["locationFullName", "includeReviews"]
+}
