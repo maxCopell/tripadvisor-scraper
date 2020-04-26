@@ -1,6 +1,3 @@
-# TripAdvisor API limitations
-Since TripAdvisor does not provide a consistent open API for 3rd parties, we at Apify decided to make our own!
-
 # TripAdvisor Scraper
 Get data from TripAdvisor fast and easily. A scraper is now available for restaurants and hotels. It's suitable for such use cases as scraping TripAdvisor reviews, emails, addresses, awards and many more attributes of hotels and restaurants on TripAdvisor.
 
