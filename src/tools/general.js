@@ -23,14 +23,17 @@ function randomDelay(minimum = 200, maximum = 600) {
 
 function getSecurityToken($) {
     let securityToken = null;
-    $('script').each((index, element) => {
-        if ($(element).get()[0].children[0] && $(element).get()[0].children[0].data.includes('define(\'page-model\'')) {
-            const { data } = $(element).get()[0].children[0];
-            [a, securityToken] = data.split(',').find(row => row.includes('JS_SECURITY_TOKEN')).split(':');
-            return false;
+    $('head script').each((index, element) => {
+
+        if ($(element).get()[0].children[0] && $(element).get()[0].children[0].data.includes("define('page-model', [], function() { return ")) {
+            let scriptText = $(element).get()[0].children[0].data;
+            scriptText = scriptText.replace("define('page-model', [], function() { return ", '');
+            scriptText = scriptText.replace('; });', '');
+            const scriptObject = JSON.parse(scriptText);
+            securityToken = scriptObject.JS_SECURITY_TOKEN;
         }
     });
-    return securityToken.replace(/"/g, '');
+    return securityToken;
 }
 
 function getCookies(response) {
@@ -188,8 +191,8 @@ function getRequestListSources(locationId, includeHotels, includeRestaurants, in
     return sources;
 }
 
-async function getClient() {
-    const response = await axios.get('https://www.tripadvisor.com/', getAgentOptions());
+async function getClient(session) {
+    const response = await axios.get('https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html', getAgentOptions(session));
     const $ = cheerio.load(response.data);
     return axios.create({
         baseURL: 'https://www.tripadvisor.co.uk/data/graphql',
@@ -197,7 +200,7 @@ async function getClient() {
             'x-requested-by': getSecurityToken($),
             Cookie: getCookies(response),
         },
-        ...getAgentOptions(),
+        ...getAgentOptions(session),
     });
 }
 function validateInput(input) {

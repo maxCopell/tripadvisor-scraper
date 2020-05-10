@@ -4,11 +4,11 @@ const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
 const { findLastReviewIndex } = require('./general');
 
-async function getAttractions(locationId) {
+async function getAttractions(locationId, session) {
     let attractions = [];
     let offset = 0;
     const limit = 20;
-    const data = await callForAttractionList(locationId, limit);
+    const data = await callForAttractionList(locationId, session, limit);
     attractions = attractions.concat(data.data);
     if (data.paging && data.paging.next) {
         const totalResults = data.paging.total_results;
@@ -16,7 +16,7 @@ async function getAttractions(locationId) {
         log.info(`Going to process ${numberOfRuns} pages of attractions`);
         for (let i = 0; i <= numberOfRuns; i++) {
             offset += limit;
-            const data2 = await callForAttractionList(locationId, limit, offset);
+            const data2 = await callForAttractionList(locationId, session, limit, offset);
             attractions = attractions.concat(data2.data);
         }
     }
