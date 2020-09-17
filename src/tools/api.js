@@ -172,7 +172,7 @@ async function callForHotelList(locationId, session, limit = LIMIT, offset = 0) 
 
 
 function getAgentOptions(session) {
-    if (!global.PROXY_GROUPS) {
+    if (!global.USE_PROXY) {
         return {};
     }
     const proxyUrl = Apify.getApifyProxyUrl({
@@ -186,7 +186,6 @@ function getAgentOptions(session) {
         httpAgent: agent,
     };
 }
-
 
 module.exports = {
     callForReview,

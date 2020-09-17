@@ -44,16 +44,19 @@ Apify.main(async () => {
         hotelId,
         restaurantId,
         checkInDate,
+        proxyConfiguration = { useApifyProxy: true },
     } = input;
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = includeReviews;
     global.LAST_REVIEW_DATE = lastReviewDate;
     global.CHECKIN_DATE = checkInDate;
-    if (input.proxyConfiguration.useApifyProxy) {
-        global.PROXY_GROUPS = input.proxyConfiguration && input.proxyConfiguration.apifyProxyGroups;
-    } else {
-        global.PROXY_GROUPS = ['SHADER'];
+    if (Apify.getEnv().isAtHome) {
+        if (!proxyConfiguration.useApifyProxy) {
+            throw new Error('Proxy required! Usage of Apify Proxy is required');
+        }
     }
+    global.USE_PROXY = proxyConfiguration.useApifyProxy;
+    global.PROXY_GROUPS = proxyConfiguration.apifyProxyGroups;
 
     global.LANGUAGE = input.language || 'en_USA';
 
