@@ -20,7 +20,7 @@
       "editor": "hidden"
     },
     "lastReviewDate": {
-      "title": "Reviews since date",
+      "title": "Reviews since date (YYYY-MM-DD)",
       "type": "string",
       "description": "It is a date where the scrapper stops loading older reviews ",
       "default": "2019-01-01",
@@ -66,7 +66,7 @@
       "editor": "hidden"
     },
     "checkInDate": {
-      "title": "Check in date",
+      "title": "Check in date (YYYY-MM-DD)",
       "type": "string",
       "description": "Hotel rooms prices will be calculated for this date",
       "editor": "textfield"
