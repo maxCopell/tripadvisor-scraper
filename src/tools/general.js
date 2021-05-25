@@ -64,20 +64,32 @@ async function resolveInBatches(promiseArray, batchLength = 10) {
 }
 
 const processReview = (review, remoteId) => {
-    const { text, title, rating, tripInfo, publishedDate, userProfile } = review;
+    const { text, title, rating, tripInfo, publishedDate, userProfile, photos } = review;
     const stayDate = tripInfo ? tripInfo.stayDate : null;
     let userLocation = null;
     let userContributions = null;
+    let userName = null;
+    let imageUrls = null;
 
     log.debug(`Processing review: ${title}`);
     if (userProfile) {
-        const { hometown, contributionCounts = {} } = userProfile;
+        const { hometown, contributionCounts = {}, username } = userProfile;
         const { sumReview } = contributionCounts;
         userContributions = sumReview;
         userLocation = hometown.fallbackString;
+        userName = username;
 
         if (hometown.location) {
             userLocation = hometown.location.additionalNames.long;
+        }
+    }
+
+    if (photos && photos.length > 0) {
+        imageUrls = [];
+        for (const photo of photos) {
+            const { photoSizes } = photo;
+            const photoUrl = photoSizes[photoSizes.length - 1].url;
+            imageUrls.push(photoUrl);
         }
     }
 
@@ -90,6 +102,8 @@ const processReview = (review, remoteId) => {
         userLocation,
         userContributions,
         remoteId,
+        userName,
+        imageUrls
     };
 };
 
@@ -148,8 +162,8 @@ async function getReviews(id, client) {
         for (let i = 0; i < numberOfFetches; i++) {
             offset += limit;
             response = await callForReview(id, client, offset, limit);
-            const reviewData = response.data[0].data.locations[0].reviewList;
-            let { reviews } = reviewData;
+            const reviewData = response.data[0].data.locations[0].reviewList || {};
+            let { reviews = [] } = reviewData;
             const lastIndex = findLastReviewIndex(reviews);
             const shouldSlice = lastIndex >= 0;
             if (shouldSlice) {
