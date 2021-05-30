@@ -1,4 +1,5 @@
 const Apify = require('apify');
+const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
 const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
@@ -104,7 +105,9 @@ async function getAttractionDetail(attraction) {
 
 async function processAttraction(attraction) {
     const attr = await getAttractionDetail(attraction);
-    return Apify.pushData(attr);
+    checkMaxItemsLimit();
+    await Apify.pushData(attr);
+    incrementSavedItems();
 }
 
 module.exports = {

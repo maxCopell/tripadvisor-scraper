@@ -3,6 +3,7 @@ const Apify = require('apify');
 const { utils: { log } } = Apify;
 const { getReviews, getReviewTags, randomDelay } = require('./general');
 const { getPlacePrices } = require('./api');
+const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
 async function processHotel(placeInfo, client, dataset) {
     const { location_id: id } = placeInfo;
@@ -62,9 +63,11 @@ async function processHotel(placeInfo, client, dataset) {
         const tags = await getReviewTags(id);
         place.reviewTags = tags;
     }
-    log.debug('Data for hotel: ', place);
+    log.debug(`Data for hotel: ${place.name}`);
     if (dataset) {
+        checkMaxItemsLimit();
         await dataset.pushData(place);
+        incrementSavedItems();
     } else {
         await Apify.setValue('OUTPUT', JSON.stringify(place), { contentType: 'application/json' });
     }
