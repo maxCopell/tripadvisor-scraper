@@ -66,6 +66,7 @@ Apify.main(async () => {
     global.PROXY_GROUPS = proxyConfiguration.apifyProxyGroups;
 
     global.LANGUAGE = input.language || 'en_USA';
+    const currency = input.currency || 'CZK';
 
     let requestList;
     const generalDataset = await Apify.openDataset();
@@ -137,11 +138,9 @@ Apify.main(async () => {
                 log.info(`Processing hotels with last data offset: ${maxOffset}`);
                 const promises = [];
                 for (let i = 0; i < maxOffset; i += limit) {
-                    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=CZK&lang=${global.LANGUAGE}&limit=${limit}&offset=${i}`;
-                    log.debug(url)
                     promises.push(() => requestQueue.addRequest({
-                        url,
-                        userData: { hotelList: true, offset: i, limit  },
+                        url: `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${currency}&lang=${global.LANGUAGE}&limit=${LIMIT}&offset=${i}`,
+                        userData: { hotelList: true, offset: i, limit: LIMIT },
                     }));
                     log.debug(`Adding location with ID: ${locationId} Offset: ${i.toString()}`);
                 }
