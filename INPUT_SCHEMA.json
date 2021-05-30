@@ -52,6 +52,18 @@
       "description": "If checked results includes reviews data",
       "default": false
     },
+    "maxReviews": {
+      "title": "Limit reviews for each place",
+      "type": "number",
+      "description": "Use '0' to not limit the number of reviews scraped",
+      "default": 0
+    },
+    "maxItems": {
+      "title": "Limit the number of places to be scraped",
+      "type": "number",
+      "description": "Use '0' to not limit the number of places scraped",
+      "default": 0
+    },
     "hotelId": {
       "title": "Hotel id",
       "type": "string",
@@ -74,10 +86,17 @@
       "title": "Proxy configuration",
       "type": "object",
       "description": "Optionaly use Apify Proxy",
-      "prefill": { "useApifyProxy": true },
-      "default": { "useApifyProxy": true },
+      "prefill": {
+        "useApifyProxy": true
+      },
+      "default": {
+        "useApifyProxy": true
+      },
       "editor": "proxy"
     }
   },
-  "required": ["locationFullName", "includeReviews"]
+  "required": [
+    "locationFullName",
+    "includeReviews"
+  ]
 }
