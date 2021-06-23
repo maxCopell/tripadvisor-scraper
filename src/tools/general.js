@@ -68,13 +68,19 @@ const processReview = (review, remoteId) => {
     const stayDate = tripInfo ? tripInfo.stayDate : null;
     let userLocation = null;
     let userContributions = null;
+    let userName = null;
+    let userProfilePhoto = null;
 
     log.debug(`Processing review: ${title}`);
     if (userProfile) {
         const { hometown, contributionCounts = {} } = userProfile;
         const { sumReview } = contributionCounts;
+
+        let picture = userProfile.avatar.photoSizes.pop();
         userContributions = sumReview;
         userLocation = hometown.fallbackString;
+        userName = userProfile.displayName
+        userProfilePhoto = picture.url
 
         if (hometown.location) {
             userLocation = hometown.location.additionalNames.long;
@@ -89,6 +95,8 @@ const processReview = (review, remoteId) => {
         publishedDate,
         userLocation,
         userContributions,
+        userName,
+        userProfilePhoto,
         remoteId,
     };
 };
