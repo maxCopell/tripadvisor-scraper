@@ -69,7 +69,7 @@ const processReview = (review, remoteId) => {
     let userLocation = null;
     let userContributions = null;
     let userName = null;
-    let imageUrls = null;
+    let imageUrls = [];
 
     log.debug(`Processing review: ${title}`);
     if (userProfile) {
@@ -85,7 +85,6 @@ const processReview = (review, remoteId) => {
     }
 
     if (photos && photos.length > 0) {
-        imageUrls = [];
         for (const photo of photos) {
             const { photoSizes } = photo;
             const photoUrl = photoSizes[photoSizes.length - 1].url;

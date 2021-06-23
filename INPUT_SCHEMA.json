@@ -25,7 +25,8 @@
       "description": "It is a date where the scrapper stops loading older reviews ",
       "default": "2019-01-01",
       "prefill": "2019-01-01",
-      "editor": "textfield"
+      "editor": "textfield",
+      "patternValue": "\\d{4}-\\d{2}-\\d{2}"
     },
     "includeRestaurants": {
       "title": "Include restaurants",
@@ -69,7 +70,8 @@
       "title": "Check in date (YYYY-MM-DD)",
       "type": "string",
       "description": "Hotel rooms prices will be calculated for this date",
-      "editor": "textfield"
+      "editor": "textfield",
+      "patternValue": "\\d{4}-\\d{2}-\\d{2}"
     },
     "proxyConfiguration": {
       "title": "Proxy configuration",
