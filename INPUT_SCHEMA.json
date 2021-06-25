@@ -465,6 +465,8 @@
       "type": "string",
       "editor": "select",
       "description": "Select the desired currency",
+      "default": "USD",
+      "prefill": "UDS",
       "enum": [
         "USD",
         "CAD",

@@ -66,7 +66,7 @@ Apify.main(async () => {
     global.PROXY_GROUPS = proxyConfiguration.apifyProxyGroups;
 
     global.LANGUAGE = input.language || 'en_USA';
-    const currency = input.currency || 'CZK';
+    const currency = input.currency || 'USD';
 
     let requestList;
     const generalDataset = await Apify.openDataset();
