@@ -54,13 +54,13 @@
     },
     "maxReviews": {
       "title": "Limit reviews for each place",
-      "type": "number",
+      "type": "integer",
       "description": "Use '0' to not limit the number of reviews scraped",
       "default": 0
     },
     "maxItems": {
       "title": "Limit the number of places to be scraped",
-      "type": "number",
+      "type": "integer",
       "description": "Use '0' to not limit the number of places scraped",
       "default": 0
     },
@@ -600,8 +600,5 @@
       "editor": "proxy"
     }
   },
-  "required": [
-    "locationFullName",
-    "includeReviews"
-  ]
+  "required": ["proxyConfiguration"]
 }
