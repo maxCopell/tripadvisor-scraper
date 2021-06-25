@@ -24,9 +24,9 @@ const {
 } = require('./tools/api');
 
 const { LIMIT } = require('./constants');
+const { getConfig, setConfig, incrementSavedItems, checkMaxItemsLimit } = require('./tools/data-limits');
 
 const { utils: { log } } = Apify;
-
 
 Apify.main(async () => {
     // Create and initialize an instance of the RequestList class that contains the start URL.
@@ -44,21 +44,29 @@ Apify.main(async () => {
         hotelId,
         restaurantId,
         checkInDate,
+        maxItems,
+        maxReviews,
         proxyConfiguration = { useApifyProxy: true },
     } = input;
+
+    setConfig({maxItems, maxReviews})
+
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = includeReviews;
     global.LAST_REVIEW_DATE = lastReviewDate;
     global.CHECKIN_DATE = checkInDate;
+
     if (Apify.getEnv().isAtHome) {
         if (!proxyConfiguration.useApifyProxy) {
             throw new Error('Proxy required! Usage of Apify Proxy is required');
         }
     }
+
     global.USE_PROXY = proxyConfiguration.useApifyProxy;
     global.PROXY_GROUPS = proxyConfiguration.apifyProxyGroups;
 
     global.LANGUAGE = input.language || 'en_USA';
+    const currency = input.currency || 'USD';
 
     let requestList;
     const generalDataset = await Apify.openDataset();
@@ -119,15 +127,19 @@ Apify.main(async () => {
             const client = sessionClients[session.id] || await getClient(session);
             // await checkIp(); // Proxy check
 
+            const { maxItems } = getConfig();
+
             if (request.userData.initialHotel) {
                 // Process initial hotelList url and add others with pagination to request queue
                 const initialRequest = await callForHotelList(locationId, session);
-                const maxOffset = initialRequest.paging.total_results;
+                const { total_results } = initialRequest.paging;
+                const maxOffset = (maxItems === 0 || total_results < maxItems) ? total_results : maxItems;
+                const limit = (maxItems === 0 || LIMIT < maxItems) ? LIMIT : maxItems;
                 log.info(`Processing hotels with last data offset: ${maxOffset}`);
                 const promises = [];
-                for (let i = 0; i <= maxOffset; i += LIMIT) {
+                for (let i = 0; i < maxOffset; i += limit) {
                     promises.push(() => requestQueue.addRequest({
-                        url: `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=CZK&lang=${global.LANGUAGE}&limit=${LIMIT}&offset=${i}`,
+                        url: `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${currency}&lang=${global.LANGUAGE}&limit=${LIMIT}&offset=${i}`,
                         userData: { hotelList: true, offset: i, limit: LIMIT },
                     }));
                     log.debug(`Adding location with ID: ${locationId} Offset: ${i.toString()}`);
@@ -150,15 +162,18 @@ Apify.main(async () => {
                 // Process initial restaurantList url and add others with pagination to request queue
                 const promises = [];
                 const initialRequest = await callForRestaurantList(locationId, session);
-                const maxOffset = initialRequest.paging.total_results;
-                log.info(maxOffset, 'Number of Restaurants');
+                
+                const { total_results } = initialRequest.paging;
+                const maxOffset = (maxItems === 0 || total_results < maxItems) ? total_results : maxItems;
+                const limit = (maxItems === 0 || LIMIT < maxItems) ? LIMIT : maxItems;
+                
                 log.info(`Processing restaurants with last data offset: ${maxOffset}`);
-                for (let i = 0; i <= maxOffset; i += LIMIT) {
+                for (let i = 0; i < maxOffset; i += limit) {
                     log.info(`Adding restaurants search page with offset: ${i} to list`);
 
                     promises.push(() => requestQueue.addRequest({
                         url: buildRestaurantUrl(locationId, i.toString()),
-                        userData: { restaurantList: true, offset: i, limit: LIMIT },
+                        userData: { restaurantList: true, offset: i, limit },
                     }));
                 }
                 await randomDelay();
@@ -188,7 +203,9 @@ Apify.main(async () => {
                     const attractions = await getAttractions(locationId, session);
                     log.info(`Found ${attractions.length} attractions`);
                     const attractionsWithDetails = await resolveInBatches(attractions.map(attr => () => processAttraction(attr)), 20);
+                    checkMaxItemsLimit();
                     await Apify.pushData(attractionsWithDetails);
+                    incrementSavedItems();
                 } catch (e) {
                     log.error(`Could not process attraction... ${e.message}`);
                 }

@@ -1,4 +1,5 @@
 const Apify = require('apify');
+const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
 const { utils: { log } } = Apify;
 const { getReviews, getReviewTags } = require('./general');
@@ -60,10 +61,12 @@ async function processRestaurant(placeInfo, client, dataset) {
     if (global.INCLUDE_REVIEW_TAGS) {
         place.reviewTags = await getReviewTags(id);
     }
-    log.debug('Data for restaurant: ', place);
+    log.debug(`Saved data restaurant: ${place.name}`);
 
     if (dataset) {
+        checkMaxItemsLimit();
         await dataset.pushData(place);
+        incrementSavedItems();
     } else {
         await Apify.setValue('OUTPUT', JSON.stringify(place), { contentType: 'application/json' });
     }
