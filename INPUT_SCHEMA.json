@@ -4,13 +4,6 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "locationId": {
-      "title": "Location id",
-      "type": "string",
-      "description": "Id of location",
-      "default": "274707",
-      "editor": "textfield"
-    },
     "lastReviewDate": {
       "title": "Reviews since date (YYYY-MM-DD)",
       "type": "string",
@@ -65,6 +58,12 @@
       "type": "integer",
       "description": "Use '0' to not limit the number of places scraped",
       "default": 0
+    },
+    "locationId": {
+      "title": "Location id",
+      "type": "string",
+      "description": "Id of location",
+      "editor": "hidden"
     },
     "hotelId": {
       "title": "Hotel id",
