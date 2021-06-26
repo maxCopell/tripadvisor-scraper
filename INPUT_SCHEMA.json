@@ -8,7 +8,9 @@
       "title": "Location id",
       "type": "string",
       "description": "Id of location",
-      "default": ""
+      "default": "",
+      "pattern": "^\\d+$",
+      "editor": "textfield"
     },
     "lastReviewDate": {
       "title": "Reviews since date (YYYY-MM-DD)",
