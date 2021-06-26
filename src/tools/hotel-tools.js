@@ -11,34 +11,35 @@ async function processHotel(placeInfo, client, dataset) {
     let placePrices;
 
     try {
-      //  placePrices = await getPlacePrices(id, randomDelay);
+        placePrices = await getPlacePrices(id, randomDelay);
     } catch (e) {
         log.warning('Hotels: Could not get place prices', { errorMessage: e });
     }
 
     if (global.INCLUDE_REVIEWS) {
         try {
-            reviews = await getReviews(id, client);
+            reviews = await getReviews(id, client, +placeInfo.num_reviews);
         } catch (e) {
-            log.error('Could not get reviews', e);
+            log.exception(e, 'Could not get reviews');
+            throw e;
         }
     }
 
     if (!placeInfo) {
         return;
     }
-    const prices = placePrices ? placePrices.offers.map(offer => ({
+    const prices = placePrices?.offers?.map((offer) => ({
         provider: offer.provider_display_name,
         price: offer.display_price_int ? offer.display_price_int : 'NOT_PROVIDED',
         isBookable: offer.is_bookable,
         link: offer.link,
-    })) : [];
+    })) ?? [];
 
     const place = {
         id: placeInfo.location_id,
         type: 'HOTEL',
         name: placeInfo.name,
-        awards: placeInfo.awards && placeInfo.awards.map(award => ({ year: award.year, name: award.display_name })),
+        awards: placeInfo.awards?.map((award) => ({ year: award.year, name: award.display_name })) ?? [],
         rankingPosition: placeInfo.ranking_position,
         priceLevel: placeInfo.price_level,
         category: placeInfo.ranking_category,
@@ -48,7 +49,7 @@ async function processHotel(placeInfo, client, dataset) {
         phone: placeInfo.phone,
         address: placeInfo.address,
         email: placeInfo.email,
-        amenities: placeInfo.amenities && placeInfo.amenities.map(amenity => amenity.name),
+        amenities: placeInfo.amenities?.map((amenity) => amenity.name) ?? [],
         prices,
         latitude: placeInfo.latitude,
         longitude: placeInfo.longitude,

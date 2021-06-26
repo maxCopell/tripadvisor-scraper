@@ -1,20 +1,17 @@
-const axios = require('axios');
 const Apify = require('apify');
 const cheerio = require('cheerio');
 const moment = require('moment');
-const check = require('check-types');
 
 const {
     callForReview,
     buildHotelUrl,
     buildRestaurantUrl,
     buildAttractionsUrl,
-    getAgentOptions,
     getReviewTagsForLocation,
 } = require('./api');
 const { getConfig } = require('./data-limits');
 
-const { utils: { log } } = Apify;
+const { log, requestAsBrowser } = Apify.utils;
 
 function randomDelay(minimum = 200, maximum = 600) {
     const min = Math.ceil(minimum);
@@ -25,7 +22,6 @@ function randomDelay(minimum = 200, maximum = 600) {
 function getSecurityToken($) {
     let securityToken = null;
     $('head script').each((index, element) => {
-
         if ($(element).get()[0].children[0] && $(element).get()[0].children[0].data.includes("define('page-model', [], function() { return ")) {
             let scriptText = $(element).get()[0].children[0].data;
             scriptText = scriptText.replace("define('page-model', [], function() { return ", '');
@@ -48,7 +44,7 @@ function getCookies(response) {
             [taudCookie] = d.split(';');
         }
     });
-    return `${sessionCookie};${taudCookie}`;
+    return `${sessionCookie}; ${taudCookie}`;
 }
 
 async function resolveInBatches(promiseArray, batchLength = 10) {
@@ -65,20 +61,31 @@ async function resolveInBatches(promiseArray, batchLength = 10) {
 }
 
 const processReview = (review, remoteId) => {
-    const { text, title, rating, tripInfo, publishedDate, userProfile } = review;
+    const { text, title, rating, tripInfo, publishedDate, userProfile, photos } = review;
     const stayDate = tripInfo ? tripInfo.stayDate : null;
     let userLocation = null;
     let userContributions = null;
+    let userName = null;
+    const imageUrls = [];
 
     log.debug(`Processing review: ${title}`);
     if (userProfile) {
-        const { hometown, contributionCounts = {} } = userProfile;
+        const { hometown, contributionCounts = {}, username } = userProfile;
         const { sumReview } = contributionCounts;
         userContributions = sumReview;
         userLocation = hometown.fallbackString;
+        userName = username;
 
         if (hometown.location) {
             userLocation = hometown.location.additionalNames.long;
+        }
+    }
+
+    if (photos && photos.length > 0) {
+        for (const photo of photos) {
+            const { photoSizes } = photo;
+            const photoUrl = photoSizes[photoSizes.length - 1].url;
+            imageUrls.push(photoUrl);
         }
     }
 
@@ -91,6 +98,8 @@ const processReview = (review, remoteId) => {
         userLocation,
         userContributions,
         remoteId,
+        userName,
+        imageUrls,
     };
 };
 
@@ -107,83 +116,90 @@ function findLastReviewIndexByDate(reviews, dateKey) {
     });
 }
 
-async function getReviews(id, client) {
+async function getReviews(id, client, expected) {
     const result = [];
     let offset = 0;
     const limit = 20;
     let numberOfFetches = 0;
     const { maxReviews } = getConfig();
-
-    try {
+    {
         const resp = await callForReview(id, client, offset, limit);
-        const { errors } = resp.data[0];
+        const { errors } = resp ?? {};
 
         if (errors) {
-            log.error('Graphql error', errors);
+            log.error('Graphql error', { errors });
         }
 
-        const reviewData = resp.data[0].data.locations[0].reviewList || {};
+        if (!resp?.data?.locations?.length) {
+            throw new Error('Missing locations');
+        }
+
+        const reviewData = resp?.data?.locations[0]?.reviewListPage || {};
         const { totalCount } = reviewData;
         let { reviews = [] } = reviewData;
         const lastIndexByDate = findLastReviewIndexByDate(reviews);
         const lastIndexByReviewsLimit = maxReviews > 0 ? maxReviews : -1;
-        const smallestIndex =  getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
+        const smallestIndex = getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
         const shouldSlice = smallestIndex >= 0;
         if (shouldSlice) {
             reviews = reviews.slice(0, smallestIndex);
         }
-       
+
         const numberOfReviews = (smallestIndex === -1 || totalCount < smallestIndex) ? totalCount : smallestIndex;
 
         log.info(`Going to process ${numberOfReviews} reviews`);
-        
+
         numberOfFetches = Math.ceil(numberOfReviews / limit);
 
-        log.debug('params', {smallestIndex, numberOfFetches, totalCount})
-        
+        log.debug('params', { smallestIndex, numberOfFetches, totalCount });
+
         if (reviews.length >= 1) {
-            reviews.forEach(review => result.push(processReview(review)));
+            reviews.forEach((review) => result.push(processReview(review)));
         }
-        
+
         if (shouldSlice) return result;
-    } catch (e) {
-        log.error(e, 'Could not make initial request');
     }
+
     let response;
-    
+
     try {
         for (let i = 1; i < numberOfFetches; i++) {
             offset += limit;
             response = await callForReview(id, client, offset, limit);
-            const reviewData = response.data[0].data.locations[0].reviewList;
-            let { reviews } = reviewData;
+
+            if (!response?.data?.locations?.length) {
+                throw new Error(`Empty locations`);
+            }
+
+            const reviewData = response.data?.locations?.[0]?.reviewListPage ?? {};
+            let { reviews = [] } = reviewData;
             const lastIndexByDate = findLastReviewIndexByDate(reviews);
             const lastIndexByReviewsLimit = maxReviews > 0 ? maxReviews - offset : -1;
-            const smallestIndex =  getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
+            const smallestIndex = getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
             const shouldSlice = smallestIndex >= 0;
             if (shouldSlice) {
                 reviews = reviews.slice(0, smallestIndex);
             }
-            reviews.forEach(review => result.push(processReview(review)));
+            reviews.forEach((review) => result.push(processReview(review)));
             if (shouldSlice) break;
             await Apify.utils.sleep(300);
         }
     } catch (e) {
-        log.error(e, 'Could not make additional requests');
+        log.exception(e, 'Could not make additional requests');
     }
     return result;
-    }
+}
 
-function getSmallestIndexGreaterThanEqualZero(indexA, indexB){
-    if (indexA >= 0 && indexB < 0){
+function getSmallestIndexGreaterThanEqualZero(indexA, indexB) {
+    if (indexA >= 0 && indexB < 0) {
         return indexA;
     }
-    if (indexB >= 0 && indexA < 0){
+    if (indexB >= 0 && indexA < 0) {
         return indexB;
-    } 
-    if (indexA >= 0 && indexB >= 0){
+    }
+    if (indexA >= 0 && indexB >= 0) {
         return indexB > indexA ? indexB : indexA;
-    } 
+    }
     return -1;
 }
 
@@ -209,22 +225,47 @@ function getRequestListSources(locationId, includeHotels, includeRestaurants, in
             },
         });
     }
-    console.log(sources)
+    console.log(sources);
     return sources;
 }
 
 async function getClient(session) {
-    const response = await axios.get('https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html', getAgentOptions(session));
-    const $ = cheerio.load(response.data);
-    return axios.create({
-        baseURL: 'https://www.tripadvisor.co.uk/data/graphql',
-        headers: {
-            'x-requested-by': getSecurityToken($),
-            Cookie: getCookies(response),
-        },
-        ...getAgentOptions(session),
+    const proxyUrl = global.PROXY?.newUrl(session.id);
+    const response = await requestAsBrowser({
+        url: 'https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html',
+        proxyUrl,
     });
+
+    const $ = cheerio.load(response.body);
+    const securityToken = getSecurityToken($);
+    const cookies = getCookies(response);
+
+    // console.log({ securityToken, cookies });
+
+    return async ({ url, method = 'POST', payload }) => {
+        const res = await requestAsBrowser({
+            url: `https://www.tripadvisor.com/data/graphql${url}`,
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'x-requested-by': securityToken,
+                Cookie: cookies,
+            },
+            json: true,
+            payload,
+            abortFunction: () => false,
+            proxyUrl,
+        });
+
+        if (res.statusCode !== 200) {
+            session?.retire();
+            throw new Error(`Status code ${res.statusCode}`);
+        }
+
+        return res.body;
+    };
 }
+
 function validateInput(input) {
     const {
         locationFullName,
@@ -236,15 +277,16 @@ function validateInput(input) {
         lastReviewDate,
         includeAttractions,
         checkInDate,
+        locationId,
     } = input;
     const getError = (property, type = 'string') => new Error(`${property} should be a ${type}`);
     const checkStringProperty = (property, propertyName) => {
-        if (property && !check.string(property)) {
+        if (property && typeof property !== 'string') {
             throw getError(propertyName);
         }
     };
     const checkBooleanProperty = (property, propertyName) => {
-        if (property && !check.boolean(property)) {
+        if (property && typeof property !== 'boolean') {
             throw getError(propertyName, 'boolean');
         }
     };
@@ -259,6 +301,7 @@ function validateInput(input) {
     // strings
     checkStringProperty(locationFullName, 'locationFullName');
     checkStringProperty(hotelId, 'hotelId');
+    checkStringProperty(locationId, 'locationId');
     checkStringProperty(restaurantId, 'restaurantId');
     checkStringProperty(lastReviewDate, 'lasReviewData');
 
@@ -277,8 +320,8 @@ function validateInput(input) {
     }
 
     // Should have all required fields
-    if (!locationFullName && !hotelId && !restaurantId) {
-        throw new Error('At least one of properties: locationFullName, hotelId, restaurantId should be set');
+    if (!locationFullName && !hotelId && !restaurantId && !locationId) {
+        throw new Error('At least one of properties: locationFullName, hotelId, restaurantId, locationId should be set');
     }
     if (!includeHotels && !includeRestaurants && !includeAttractions) {
         throw new Error('At least one of properties: includeHotels or includeRestaurants should be true');
@@ -291,7 +334,7 @@ async function getReviewTags(locationId) {
     let offset = 0;
     const limit = 20;
     const data = await getReviewTagsForLocation(locationId, limit);
-    tags = tags.concat(data.data);
+    tags = tags.concat(data);
     if (data.paging && data.paging.next) {
         const totalResults = data.paging.total_results;
         const numberOfRuns = Math.ceil(totalResults / limit);
@@ -299,11 +342,65 @@ async function getReviewTags(locationId) {
         for (let i = 0; i <= numberOfRuns; i++) {
             offset += limit;
             const data2 = await getReviewTagsForLocation(locationId, limit, offset);
-            tags = tags.concat(data2.data);
+            tags = tags.concat(data2);
         }
     }
     return tags;
 }
+
+/**
+ * Do a generic check when using Apify Proxy
+ *
+ * @typedef params
+ * @property {any} [params.proxyConfig] Provided apify proxy configuration
+ * @property {boolean} [params.required] Make the proxy usage required when running on the platform
+ * @property {string[]} [params.blacklist] Blacklist of proxy groups, by default it's ['GOOGLE_SERP']
+ * @property {boolean} [params.force] By default, it only do the checks on the platform. Force checking regardless where it's running
+ * @property {string[]} [params.hint] Hint specific proxy groups that should be used, like SHADER or RESIDENTIAL
+ *
+ * @example
+ *    const proxy = await proxyConfiguration({
+ *       proxyConfig: input.proxy,
+ *       blacklist: ['SHADER'],
+ *       hint: ['RESIDENTIAL']
+ *    });
+ *
+ * @param {params} params
+ * @returns {Promise<Apify.ProxyConfiguration>}
+ */
+const proxyConfiguration = async ({
+    proxyConfig,
+    required = true,
+    force = Apify.isAtHome(),
+    blacklist = ['GOOGLESERP'],
+    hint = [],
+}) => {
+    const configuration = await Apify.createProxyConfiguration(proxyConfig);
+
+    // this works for custom proxyUrls
+    if (Apify.isAtHome() && required) {
+        if (!configuration || (!configuration.usesApifyProxy && (!configuration.proxyUrls || !configuration.proxyUrls.length)) || !configuration.newUrl()) {
+            throw new Error('\n=======\nYou must use Apify proxy or custom proxy URLs\n\n=======');
+        }
+    }
+
+    // check when running on the platform by default
+    if (force) {
+        // only when actually using Apify proxy it needs to be checked for the groups
+        if (configuration?.usesApifyProxy) {
+            if (blacklist.some((blacklisted) => (configuration.groups || []).includes(blacklisted))) {
+                throw new Error(`\n=======\nThese proxy groups cannot be used in this actor. Choose other group or contact support@apify.com to give you proxy trial:\n\n*  ${blacklist.join('\n*  ')}\n\n=======`);
+            }
+
+            // specific non-automatic proxy groups like RESIDENTIAL, not an error, just a hint
+            if (hint.length && !hint.some((group) => (configuration.groups || []).includes(group))) {
+                Apify.utils.log.info(`\n=======\nYou can pick specific proxy groups for better experience:\n\n*  ${hint.join('\n*  ')}\n\n=======`);
+            }
+        }
+    }
+
+    return configuration;
+};
 
 module.exports = {
     resolveInBatches,
@@ -314,4 +411,5 @@ module.exports = {
     getReviewTags,
     getReviews,
     findLastReviewIndex: findLastReviewIndexByDate,
+    proxyConfiguration,
 };

@@ -4,26 +4,27 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
+    "locationId": {
+      "title": "Location id",
+      "type": "string",
+      "description": "Id of location",
+      "default": ""
+    },
+    "lastReviewDate": {
+      "title": "Reviews since date (YYYY-MM-DD)",
+      "type": "string",
+      "description": "It is a date where the scrapper stops loading older reviews ",
+      "default": "",
+      "prefill": "2021-01-01",
+      "editor": "textfield",
+      "pattern": "\\d{4}-\\d{2}-\\d{2}"
+    },
     "locationFullName": {
       "title": "Location",
       "type": "string",
       "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location",
       "default": "Prague",
-      "editor": "textfield"
-    },
-    "locationId": {
-      "title": "Location id",
-      "type": "string",
-      "description": "Id of location",
-      "default": "",
-      "editor": "hidden"
-    },
-    "lastReviewDate": {
-      "title": "Reviews since date",
-      "type": "string",
-      "description": "It is a date where the scrapper stops loading older reviews ",
-      "default": "2019-01-01",
-      "prefill": "2019-01-01",
+      "prefill": "Prague",
       "editor": "textfield"
     },
     "includeRestaurants": {
@@ -77,10 +78,12 @@
       "editor": "hidden"
     },
     "checkInDate": {
-      "title": "Check in date",
+      "title": "Check in date (YYYY-MM-DD)",
       "type": "string",
+      "default": "",
       "description": "Hotel rooms prices will be calculated for this date",
-      "editor": "textfield"
+      "editor": "textfield",
+      "pattern": "\\d{4}-\\d{2}-\\d{2}"
     },
     "language": {
       "title": "Language",

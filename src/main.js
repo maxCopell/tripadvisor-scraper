@@ -9,6 +9,7 @@ const {
     getClient,
     randomDelay,
     validateInput,
+    proxyConfiguration,
 } = require('./tools/general');
 
 const { processRestaurant } = require('./tools/restaurant-tools');
@@ -46,27 +47,20 @@ Apify.main(async () => {
         checkInDate,
         maxItems,
         maxReviews,
-        proxyConfiguration = { useApifyProxy: true },
     } = input;
 
-    setConfig({maxItems, maxReviews})
+    setConfig({ maxItems, maxReviews });
 
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = includeReviews;
     global.LAST_REVIEW_DATE = lastReviewDate;
     global.CHECKIN_DATE = checkInDate;
+    global.PROXY = await proxyConfiguration({
+        proxyConfig: input.proxyConfiguration,
+    });
 
-    if (Apify.getEnv().isAtHome) {
-        if (!proxyConfiguration.useApifyProxy) {
-            throw new Error('Proxy required! Usage of Apify Proxy is required');
-        }
-    }
-
-    global.USE_PROXY = proxyConfiguration.useApifyProxy;
-    global.PROXY_GROUPS = proxyConfiguration.apifyProxyGroups;
-
-    global.LANGUAGE = input.language || 'en_USA';
-    const currency = input.currency || 'USD';
+    global.LANGUAGE = input.language || 'en';
+    global.CURRENCY = input.currency || 'USD';
 
     let requestList;
     const generalDataset = await Apify.openDataset();
@@ -76,7 +70,7 @@ Apify.main(async () => {
         if (locationIdInput) {
             locationId = locationIdInput;
         } else {
-            locationId = await getLocationId(locationFullName, `ta${Math.random() * 10000}`);
+            locationId = await getLocationId(locationFullName);
         }
         log.info(`Processing locationId: ${locationId}`);
         requestList = new Apify.RequestList({
@@ -117,7 +111,7 @@ Apify.main(async () => {
                     }
                 }
                 if (!listenerAdded) {
-                    sessionPool.on(SESSION_RETIRED, ses => delete sessionClients[ses.id]);
+                    sessionPool.on(SESSION_RETIRED, (ses) => delete sessionClients[ses.id]);
                 }
                 return session;
             },
@@ -132,14 +126,16 @@ Apify.main(async () => {
             if (request.userData.initialHotel) {
                 // Process initial hotelList url and add others with pagination to request queue
                 const initialRequest = await callForHotelList(locationId, session);
-                const { total_results } = initialRequest.paging;
-                const maxOffset = (maxItems === 0 || total_results < maxItems) ? total_results : maxItems;
+                if (!initialRequest?.length) {
+                    throw new Error(`Result is empty`);
+                }
+                const maxOffset = (maxItems === 0 || initialRequest.length < maxItems) ? initialRequest.length : maxItems;
                 const limit = (maxItems === 0 || LIMIT < maxItems) ? LIMIT : maxItems;
                 log.info(`Processing hotels with last data offset: ${maxOffset}`);
                 const promises = [];
                 for (let i = 0; i < maxOffset; i += limit) {
                     promises.push(() => requestQueue.addRequest({
-                        url: `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${currency}&lang=${global.LANGUAGE}&limit=${LIMIT}&offset=${i}`,
+                        url: `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${LIMIT}&offset=${i}`,
                         userData: { hotelList: true, offset: i, limit: LIMIT },
                     }));
                     log.debug(`Adding location with ID: ${locationId} Offset: ${i.toString()}`);
@@ -147,26 +143,28 @@ Apify.main(async () => {
                 await resolveInBatches(promises);
             } else if (request.userData.hotelList) {
                 // Gets ids of hotels from hotelList -> gets data for given id and saves hotel to dataset
-                try {
-                    log.info(`Processing hotel list with offset ${request.userData.offset}`);
-                    const hotelList = await callForHotelList(locationId, session, request.userData.limit, request.userData.offset);
-                    await resolveInBatches(hotelList.data.map((hotel) => {
-                        log.debug(`Processing hotel: ${hotel.name}`);
+                log.info(`Processing hotel list with offset ${request.userData.offset}`);
+                const hotelList = await callForHotelList(locationId, session, request.userData.limit, request.userData.offset);
 
-                        return () => processHotel(hotel, client, generalDataset);
-                    }));
-                } catch (e) {
-                    log.error('Hotel list error', e);
+                if (!hotelList?.length) {
+                    throw new Error('Hotel list is empty');
                 }
+
+                await resolveInBatches(hotelList.map((hotel) => {
+                    log.debug(`Processing hotel: ${hotel.name}`);
+
+                    return () => processHotel(hotel, client, generalDataset);
+                }));
             } else if (request.userData.initialRestaurant) {
                 // Process initial restaurantList url and add others with pagination to request queue
                 const promises = [];
                 const initialRequest = await callForRestaurantList(locationId, session);
-                
-                const { total_results } = initialRequest.paging;
-                const maxOffset = (maxItems === 0 || total_results < maxItems) ? total_results : maxItems;
+                if (!initialRequest?.length) {
+                    throw new Error(`Result length is zero`);
+                }
+                const maxOffset = (maxItems === 0 || initialRequest.length < maxItems) ? initialRequest.length : maxItems;
                 const limit = (maxItems === 0 || LIMIT < maxItems) ? LIMIT : maxItems;
-                
+
                 log.info(`Processing restaurants with last data offset: ${maxOffset}`);
                 for (let i = 0; i < maxOffset; i += limit) {
                     log.info(`Adding restaurants search page with offset: ${i} to list`);
@@ -181,7 +179,12 @@ Apify.main(async () => {
             } else if (request.userData.restaurantList) {
                 log.info(`Processing restaurant list with offset ${request.userData.offset}`);
                 const restaurantList = await callForRestaurantList(locationId, session, request.userData.limit, request.userData.offset);
-                await resolveInBatches(restaurantList.data.map((restaurant) => {
+
+                if (!restaurantList?.length) {
+                    throw new Error(`Restaurant list is empty`);
+                }
+
+                await resolveInBatches(restaurantList.map((restaurant) => {
                     log.debug(`Processing restaurant: ${restaurant.name}`);
 
                     return () => processRestaurant(restaurant, client, generalDataset);
@@ -202,7 +205,7 @@ Apify.main(async () => {
                 try {
                     const attractions = await getAttractions(locationId, session);
                     log.info(`Found ${attractions.length} attractions`);
-                    const attractionsWithDetails = await resolveInBatches(attractions.map(attr => () => processAttraction(attr)), 20);
+                    const attractionsWithDetails = await resolveInBatches(attractions.map((attr) => () => processAttraction(attr)), 20);
                     checkMaxItemsLimit();
                     await Apify.pushData(attractionsWithDetails);
                     incrementSavedItems();

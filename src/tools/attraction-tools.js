@@ -10,7 +10,7 @@ async function getAttractions(locationId, session) {
     let offset = 0;
     const limit = 20;
     const data = await callForAttractionList(locationId, session, limit);
-    attractions = attractions.concat(data.data);
+    attractions = attractions.concat(data);
     if (data.paging && data.paging.next) {
         const totalResults = data.paging.total_results;
         const numberOfRuns = Math.ceil(totalResults / limit);
@@ -18,7 +18,7 @@ async function getAttractions(locationId, session) {
         for (let i = 0; i <= numberOfRuns; i++) {
             offset += limit;
             const data2 = await callForAttractionList(locationId, session, limit, offset);
-            attractions = attractions.concat(data2.data);
+            attractions = attractions.concat(data2);
         }
     }
     return attractions;
@@ -65,7 +65,7 @@ async function getReviewsForAttraction(locationId) {
     if (shouldSlice) {
         revs = revs.slice(0, lastIndex);
     }
-    revs.forEach(review => reviews.push(processAttractionReview(review)));
+    revs.forEach((review) => reviews.push(processAttractionReview(review)));
     if (shouldSlice) return reviews;
     if (data.paging && data.paging.next) {
         const totalResults = data.paging.total_results;
@@ -79,7 +79,7 @@ async function getReviewsForAttraction(locationId) {
             if (shouldSlice) {
                 reviewsToPush = reviewsToPush.slice(0, lastIndex);
             }
-            reviewsToPush.forEach(review => reviews.push(processAttractionReview(review)));
+            reviewsToPush.forEach((review) => reviews.push(processAttractionReview(review)));
             if (shouldSlice) break;
         }
     }
@@ -95,7 +95,7 @@ async function getAttractionDetail(attraction) {
             reviews = await getReviewsForAttraction(locationId);
             log.info(`Got ${reviews.length} reviews for ${attraction.name}`);
         } catch (e) {
-            log.error(`Could not get reviews for attraction ${attraction.name} due to ${e.message}`);
+            log.exception(e, `Could not get reviews for attraction ${attraction.name}`);
         }
     }
 

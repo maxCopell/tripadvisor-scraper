@@ -255,3 +255,4 @@ The actor produces output as data you can get by section.
 
  1. Visit the Place Page, e.g. `https://www.tripadvisor.cz/Hotel_Review-g186338-d1657415-Reviews-Park_Plaza_Westminster_Bridge_London-London_England.html`.
  2. The id is the number after `-d` in the url. For this url it would be `1657415`.
+
