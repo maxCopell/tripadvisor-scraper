@@ -8,7 +8,7 @@
       "title": "Location id",
       "type": "string",
       "description": "Id of location",
-      "default": "",
+      "default": "274707",
       "editor": "textfield"
     },
     "lastReviewDate": {
@@ -24,8 +24,8 @@
       "title": "Location",
       "type": "string",
       "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location",
-      "default": "Prague",
-      "prefill": "Prague",
+      "default": "",
+      "prefill": "",
       "editor": "textfield"
     },
     "includeRestaurants": {
