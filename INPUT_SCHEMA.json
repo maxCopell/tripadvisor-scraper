@@ -26,7 +26,7 @@
       "default": "2019-01-01",
       "prefill": "2019-01-01",
       "editor": "textfield",
-      "patternValue": "\\d{4}-\\d{2}-\\d{2}"
+      "pattern": "\\d{4}-\\d{2}-\\d{2}"
     },
     "includeRestaurants": {
       "title": "Include restaurants",
@@ -71,7 +71,7 @@
       "type": "string",
       "description": "Hotel rooms prices will be calculated for this date",
       "editor": "textfield",
-      "patternValue": "\\d{4}-\\d{2}-\\d{2}"
+      "pattern": "\\d{4}-\\d{2}-\\d{2}"
     },
     "proxyConfiguration": {
       "title": "Proxy configuration",
