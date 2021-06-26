@@ -9,7 +9,6 @@
       "type": "string",
       "description": "Id of location",
       "default": "",
-      "pattern": "^\\d+$",
       "editor": "textfield"
     },
     "lastReviewDate": {
