@@ -21,7 +21,7 @@ let savedItems = 0;
 
 const checkMaxItemsLimit = (increment = 0) => {
     if (config.maxItems !== 0 && savedItems + increment >= config.maxItems) {
-        log.warning('Reached maxItems limit!');
+        log.debug('Reached maxItems limit!', { savedItems, ...config });
         return true;
     }
 

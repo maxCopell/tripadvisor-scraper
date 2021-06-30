@@ -1,5 +1,5 @@
 const Apify = require('apify');
-const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
+const { incrementSavedItems, checkMaxItemsLimit, getConfig } = require('./data-limits');
 
 const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
@@ -23,7 +23,7 @@ async function getAttractions({ locationId, session }) {
         offset += limit;
         attractions.push(...data);
 
-        if (data.length < limit) break;
+        if (data.length < limit || checkMaxItemsLimit(data.length)) break;
     }
     return attractions;
 }
@@ -70,6 +70,8 @@ async function getReviewsForAttraction({ locationId, session }) {
     let offset = 0;
     const limit = 10;
 
+    const { maxReviews } = getConfig();
+
     while (true) {
         log.debug(`Going to process offset ${offset} review for location ${locationId}`);
         let revs = await callForAttractionReview({ locationId, session, limit, offset });
@@ -83,7 +85,11 @@ async function getReviewsForAttraction({ locationId, session }) {
 
         revs.forEach((review) => reviews.push(processAttractionReview(review)));
 
-        if (!revs.length || revs < limit || shouldSlice) break;
+        if (!revs.length || revs < limit || shouldSlice || reviews.length >= maxReviews) break;
+    }
+
+    if (reviews.length > maxReviews) {
+        return reviews.slice(0, maxReviews);
     }
 
     return reviews;

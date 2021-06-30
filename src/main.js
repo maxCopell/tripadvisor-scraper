@@ -26,7 +26,7 @@ const {
 } = require('./tools/api');
 
 const { LIMIT } = require('./constants');
-const { getConfig, setConfig } = require('./tools/data-limits');
+const { getConfig, setConfig, checkMaxItemsLimit } = require('./tools/data-limits');
 
 const { utils: { log } } = Apify;
 
@@ -132,6 +132,10 @@ Apify.main(async () => {
         },
         handleRequestTimeoutSecs: 180,
         handleRequestFunction: async ({ request, session }) => {
+            if (checkMaxItemsLimit()) {
+                return;
+            }
+
             const client = sessionClients[session.id] || await getClient(session);
             // await checkIp(); // Proxy check
 
@@ -162,6 +166,7 @@ Apify.main(async () => {
                         userData: { hotelList: true, offset: i, limit: LIMIT },
                     }));
                     log.debug(`Adding location with ID: ${locationId} Offset: ${i.toString()}`);
+                    if (checkMaxItemsLimit(i)) break;
                 }
                 await resolveInBatches(promises);
             } else if (request.userData.hotelList) {
@@ -180,6 +185,8 @@ Apify.main(async () => {
 
                 await resolveInBatches(hotelList.map((hotel) => {
                     log.debug(`Processing hotel: ${hotel.name}`);
+
+                    if (checkMaxItemsLimit(10)) return () => {};
 
                     return () => processHotel({ placeInfo: hotel, session, client, dataset: generalDataset });
                 }));
@@ -206,6 +213,8 @@ Apify.main(async () => {
                         url: buildRestaurantUrl(locationId, i.toString()),
                         userData: { restaurantList: true, offset: i, limit: LIMIT },
                     }));
+
+                    if (checkMaxItemsLimit(i)) break;
                 }
                 await resolveInBatches(promises);
             } else if (request.userData.restaurantList) {
@@ -223,6 +232,8 @@ Apify.main(async () => {
 
                 await resolveInBatches(restaurantList.map((restaurant) => {
                     log.debug(`Processing restaurant: ${restaurant.name}`);
+
+                    if (checkMaxItemsLimit(10)) return () => {};
 
                     return () => processRestaurant({
                         placeInfo: restaurant,
@@ -255,7 +266,14 @@ Apify.main(async () => {
                 try {
                     const attractions = await getAttractions({ locationId, session });
                     log.info(`Found ${attractions.length} attractions`);
-                    await resolveInBatches(attractions.map((attr) => () => processAttraction({ attraction: attr, session })), 10);
+                    await resolveInBatches(attractions.map((attr) => {
+                        if (checkMaxItemsLimit(10)) return () => {};
+
+                        return () => processAttraction({
+                            attraction: attr,
+                            session
+                        });
+                    }), 10);
                 } catch (e) {
                     log.error(`Could not process attraction... ${e.message}`);
                 }
