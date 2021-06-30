@@ -10,8 +10,7 @@
       "description": "It is a date where the scrapper stops loading older reviews ",
       "default": "",
       "prefill": "2021-01-01",
-      "editor": "textfield",
-      "pattern": "\\d{4}-\\d{2}-\\d{2}"
+      "editor": "textfield"
     },
     "locationFullName": {
       "title": "Location",
@@ -59,6 +58,13 @@
       "description": "Use '0' to not limit the number of places scraped",
       "default": 0
     },
+    "includeTags": {
+      "title": "Include restaurant tags",
+      "description": "Include restaurant tags",
+      "default": false,
+      "type": "boolean",
+      "editor": "checkbox"
+    },
     "locationId": {
       "title": "Location id",
       "type": "string",
@@ -82,8 +88,7 @@
       "type": "string",
       "default": "",
       "description": "Hotel rooms prices will be calculated for this date",
-      "editor": "textfield",
-      "pattern": "\\d{4}-\\d{2}-\\d{2}"
+      "editor": "textfield"
     },
     "language": {
       "title": "Language",
@@ -603,6 +608,13 @@
         "useApifyProxy": true
       },
       "editor": "proxy"
+    },
+    "debugLog": {
+      "title": "Debug log",
+      "description": "Enable verbose logs for debugging purposes",
+      "type": "boolean",
+      "default": false,
+      "editor": "checkbox"
     }
   },
   "required": ["proxyConfiguration"]

@@ -5,7 +5,7 @@
 	"main": "src/main.js",
 	"dependencies": {
 		"apify": "^1.2.1",
-		"cheerio": "1.0.0-rc.3",
+		"cheerio": "1.0.0-rc.10",
 		"moment": "^2.29.1"
 	},
 	"devDependencies": {

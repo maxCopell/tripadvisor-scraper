@@ -2,9 +2,17 @@ const Apify = require('apify');
 const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
 const { utils: { log } } = Apify;
-const { getReviews, getReviewTags } = require('./general');
+const general = require('./general');
 
+const { getReviews, getReviewTags } = general;
+
+/**
+ * @param {any} placeInfo
+ */
 function getHours(placeInfo) {
+    /**
+     * @type {any[]}
+     */
     const placeHolder = [];
 
     if (!placeInfo.hours) {
@@ -18,7 +26,16 @@ function getHours(placeInfo) {
     return placeInfo?.hours?.week_ranges?.map((wR) => wR.map((day) => ({ open: day.open_time, close: day.close_time }))) ?? placeHolder;
 }
 
-async function processRestaurant(placeInfo, client, dataset) {
+/**
+ *
+ * @param {{
+ *   placeInfo: unknown,
+ *   client: general.Client,
+ *   dataset?: Apify.Dataset
+ *   session: Apify.Session
+ * }} params
+ */
+async function processRestaurant({ placeInfo, client, dataset, session }) {
     const { location_id: id } = placeInfo;
     let reviews = [];
 
@@ -27,7 +44,7 @@ async function processRestaurant(placeInfo, client, dataset) {
     }
 
     if (global.INCLUDE_REVIEWS) {
-        reviews = await getReviews(id, client, +placeInfo.num_reviews);
+        reviews = await getReviews({ placeId: id, client });
     }
 
     const place = {
@@ -57,14 +74,15 @@ async function processRestaurant(placeInfo, client, dataset) {
         reviews,
     };
     if (global.INCLUDE_REVIEW_TAGS) {
-        place.reviewTags = await getReviewTags(id);
+        place.reviewTags = await getReviewTags({ locationId: id, session });
     }
     log.debug(`Saved data restaurant: ${place.name}`);
 
     if (dataset) {
-        checkMaxItemsLimit();
-        await dataset.pushData(place);
-        incrementSavedItems();
+        if (!checkMaxItemsLimit()) {
+            await dataset.pushData(place);
+            incrementSavedItems();
+        }
     } else {
         await Apify.setValue('OUTPUT', JSON.stringify(place), { contentType: 'application/json' });
     }

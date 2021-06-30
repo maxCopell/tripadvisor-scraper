@@ -5,21 +5,25 @@ const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
 const { findLastReviewIndex } = require('./general');
 
-async function getAttractions(locationId, session) {
-    let attractions = [];
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function getAttractions({ locationId, session }) {
+    /** @type {any[]} */
+    const attractions = [];
     let offset = 0;
     const limit = 20;
-    const data = await callForAttractionList(locationId, session, limit);
-    attractions = attractions.concat(data);
-    if (data.paging && data.paging.next) {
-        const totalResults = data.paging.total_results;
-        const numberOfRuns = Math.ceil(totalResults / limit);
-        log.info(`Going to process ${numberOfRuns} pages of attractions`);
-        for (let i = 0; i <= numberOfRuns; i++) {
-            offset += limit;
-            const data2 = await callForAttractionList(locationId, session, limit, offset);
-            attractions = attractions.concat(data2);
-        }
+
+    while (true) {
+        log.debug(`Going to process offset ${offset} for attractions ${locationId}`);
+        const data = await callForAttractionList({ locationId, session, limit, offset });
+        offset += limit;
+        attractions.push(...data);
+
+        if (data.length < limit) break;
     }
     return attractions;
 }
@@ -54,45 +58,50 @@ function processAttractionReview(review) {
     };
 }
 
-async function getReviewsForAttraction(locationId) {
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function getReviewsForAttraction({ locationId, session }) {
+    /** @type {any[]} */
     const reviews = [];
     let offset = 0;
-    const limit = 50;
-    const data = await callForAttractionReview(locationId, limit);
-    let { data: revs } = data;
-    let lastIndex = findLastReviewIndex(revs, 'published_date');
-    let shouldSlice = lastIndex >= 0;
-    if (shouldSlice) {
-        revs = revs.slice(0, lastIndex);
-    }
-    revs.forEach((review) => reviews.push(processAttractionReview(review)));
-    if (shouldSlice) return reviews;
-    if (data.paging && data.paging.next) {
-        const totalResults = data.paging.total_results;
-        const numberOfRuns = Math.ceil(totalResults / limit);
-        log.info(`Going to process ${numberOfRuns} pages of reviews`);
-        for (let i = 0; i <= numberOfRuns; i++) {
-            offset += limit;
-            let { data: reviewsToPush } = await callForAttractionReview(locationId, limit, offset);
-            lastIndex = findLastReviewIndex(reviewsToPush, 'published_date');
-            shouldSlice = lastIndex >= 0;
-            if (shouldSlice) {
-                reviewsToPush = reviewsToPush.slice(0, lastIndex);
-            }
-            reviewsToPush.forEach((review) => reviews.push(processAttractionReview(review)));
-            if (shouldSlice) break;
+    const limit = 10;
+
+    while (true) {
+        log.debug(`Going to process offset ${offset} review for location ${locationId}`);
+        let revs = await callForAttractionReview({ locationId, session, limit, offset });
+        offset += limit;
+        const lastIndex = findLastReviewIndex({ reviews: revs, dateKey: 'published_date' });
+        const shouldSlice = lastIndex >= 0;
+
+        if (shouldSlice) {
+            revs = revs.slice(0, lastIndex);
         }
+
+        revs.forEach((review) => reviews.push(processAttractionReview(review)));
+
+        if (!revs.length || revs < limit || shouldSlice) break;
     }
+
     return reviews;
 }
 
-async function getAttractionDetail(attraction) {
+/**
+ * @param {{
+ *   attraction: unknown,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function getAttractionDetail({ attraction, session }) {
     log.info(`Processing detail for ${attraction.name} attraction`);
     const locationId = attraction.location_id;
     let reviews = [];
     if (global.INCLUDE_REVIEWS) {
         try {
-            reviews = await getReviewsForAttraction(locationId);
+            reviews = await getReviewsForAttraction({ locationId, session });
             log.info(`Got ${reviews.length} reviews for ${attraction.name}`);
         } catch (e) {
             log.exception(e, `Could not get reviews for attraction ${attraction.name}`);
@@ -103,11 +112,18 @@ async function getAttractionDetail(attraction) {
     return attraction;
 }
 
-async function processAttraction(attraction) {
-    const attr = await getAttractionDetail(attraction);
-    checkMaxItemsLimit();
-    await Apify.pushData(attr);
-    incrementSavedItems();
+/**
+ * @param {{
+ *   attraction: unknown,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function processAttraction({ attraction, session }) {
+    const attr = await getAttractionDetail({ attraction, session });
+    if (!checkMaxItemsLimit() && attr) {
+        await Apify.pushData(attr);
+        incrementSavedItems();
+    }
 }
 
 module.exports = {

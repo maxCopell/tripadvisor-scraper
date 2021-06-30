@@ -1,3 +1,14 @@
+# 2021-06-29
+
+Features:
+* Retries of internal requests
+* Add `includeTags` to input
+* Pagination
+* Linting and refactoring
+
+Bug fix:
+* Remove patterns from input as they are considered required
+
 # 2021-06-25
 
 Features:

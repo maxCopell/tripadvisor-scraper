@@ -19,14 +19,17 @@ const config = {
 
 let savedItems = 0;
 
-const checkMaxItemsLimit = () => {
-    if (config.maxItems !== 0 && savedItems >= config.maxItems) {
+const checkMaxItemsLimit = (increment = 0) => {
+    if (config.maxItems !== 0 && savedItems + increment >= config.maxItems) {
         log.warning('Reached maxItems limit!');
+        return true;
     }
+
+    return false;
 };
 
-const incrementSavedItems = () => {
-    savedItems += 1;
+const incrementSavedItems = (count = 1) => {
+    savedItems += count;
     log.debug('Saving:', { savedItems, maxItems: config.maxItems });
 };
 

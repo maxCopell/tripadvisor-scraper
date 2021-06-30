@@ -34,30 +34,39 @@ function getSecurityToken($) {
 }
 
 function getCookies(response) {
-    let sessionCookie = null;
-    let taudCookie = null;
-    response.headers['set-cookie'].forEach((d) => {
-        if (d.includes('TASession')) {
-            [sessionCookie] = d.split(';');
+    return (response?.headers?.['set-cookie'] ?? []).map((d) => {
+        const cookie = d.split(';');
+
+        if (cookie.includes('TASession') || cookie.includes('TAUD')) {
+            return cookie[0];
         }
-        if (d.includes('TAUD')) {
-            [taudCookie] = d.split(';');
-        }
-    });
-    return `${sessionCookie}; ${taudCookie}`;
+    }).filter((s) => s).join('; ');
 }
 
+/**
+ * @param {Array<() => Promise<any> | Promise<any>>} promiseArray
+ * @param {number} [batchLength]
+ */
 async function resolveInBatches(promiseArray, batchLength = 10) {
-    const promises = [];
-    for (const promise of promiseArray) {
-        if (typeof promise === 'function') {
-            promises.push(promise());
-        } else {
-            promises.push(promise);
-        }
-        if (promises.length % batchLength === 0) await Promise.all(promises);
+    const results = [];
+
+    while (true) {
+        const promises = promiseArray.splice(0, batchLength).map((promise) => {
+            if (typeof promise === 'function') {
+                return promise();
+            }
+
+            return promise;
+        });
+
+        if (!promises.length) break;
+
+        results.push(...await Promise.all(promises));
+
+        if (promises.length < batchLength) break;
     }
-    return Promise.all(promises);
+
+    return results;
 }
 
 const processReview = (review, remoteId) => {
@@ -103,7 +112,13 @@ const processReview = (review, remoteId) => {
     };
 };
 
-function findLastReviewIndexByDate(reviews, dateKey) {
+/**
+ * @param {{
+ *   reviews: any[],
+ *   dateKey: string
+ * }} params
+ */
+function findLastReviewIndexByDate({ reviews, dateKey }) {
     return reviews.findIndex((r) => {
         let rDate;
         if (dateKey) {
@@ -116,14 +131,22 @@ function findLastReviewIndexByDate(reviews, dateKey) {
     });
 }
 
-async function getReviews(id, client, expected) {
+/**
+ *
+ * @param {{
+ *   placeId: string,
+ *   client: Client,
+ * }} params
+ */
+async function getReviews({ placeId, client }) {
+    /** @type {any[]} */
     const result = [];
     let offset = 0;
     const limit = 20;
-    let numberOfFetches = 0;
     const { maxReviews } = getConfig();
-    {
-        const resp = await callForReview(id, client, offset, limit);
+
+    while (true) {
+        const resp = await callForReview({ placeId, client, offset, limit });
         const { errors } = resp ?? {};
 
         if (errors) {
@@ -134,10 +157,13 @@ async function getReviews(id, client, expected) {
             throw new Error('Missing locations');
         }
 
+        offset += limit;
+
         const reviewData = resp?.data?.locations[0]?.reviewListPage || {};
+
         const { totalCount } = reviewData;
         let { reviews = [] } = reviewData;
-        const lastIndexByDate = findLastReviewIndexByDate(reviews);
+        const lastIndexByDate = findLastReviewIndexByDate({ reviews, dateKey: 'publishedDate' });
         const lastIndexByReviewsLimit = maxReviews > 0 ? maxReviews : -1;
         const smallestIndex = getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
         const shouldSlice = smallestIndex >= 0;
@@ -148,62 +174,39 @@ async function getReviews(id, client, expected) {
         const numberOfReviews = (smallestIndex === -1 || totalCount < smallestIndex) ? totalCount : smallestIndex;
 
         log.info(`Going to process ${numberOfReviews} reviews`);
-
-        numberOfFetches = Math.ceil(numberOfReviews / limit);
-
-        log.debug('params', { smallestIndex, numberOfFetches, totalCount });
+        log.debug('params', { smallestIndex, offset, totalCount });
 
         if (reviews.length >= 1) {
             reviews.forEach((review) => result.push(processReview(review)));
         }
 
-        if (shouldSlice) return result;
+        if (reviews.length < limit || result.length >= maxReviews || shouldSlice) break;
     }
 
-    let response;
-
-    try {
-        for (let i = 1; i < numberOfFetches; i++) {
-            offset += limit;
-            response = await callForReview(id, client, offset, limit);
-
-            if (!response?.data?.locations?.length) {
-                throw new Error(`Empty locations`);
-            }
-
-            const reviewData = response.data?.locations?.[0]?.reviewListPage ?? {};
-            let { reviews = [] } = reviewData;
-            const lastIndexByDate = findLastReviewIndexByDate(reviews);
-            const lastIndexByReviewsLimit = maxReviews > 0 ? maxReviews - offset : -1;
-            const smallestIndex = getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
-            const shouldSlice = smallestIndex >= 0;
-            if (shouldSlice) {
-                reviews = reviews.slice(0, smallestIndex);
-            }
-            reviews.forEach((review) => result.push(processReview(review)));
-            if (shouldSlice) break;
-            await Apify.utils.sleep(300);
-        }
-    } catch (e) {
-        log.exception(e, 'Could not make additional requests');
-    }
     return result;
 }
 
+/**
+ * @param {number} indexA
+ * @param {number} indexB
+ */
 function getSmallestIndexGreaterThanEqualZero(indexA, indexB) {
-    if (indexA >= 0 && indexB < 0) {
-        return indexA;
+    if (+indexA >= 0 && +indexB < 0) {
+        return +indexA;
     }
-    if (indexB >= 0 && indexA < 0) {
-        return indexB;
+    if (+indexB >= 0 && +indexA < 0) {
+        return +indexB;
     }
-    if (indexA >= 0 && indexB >= 0) {
-        return indexB > indexA ? indexB : indexA;
+    if (+indexA >= 0 && +indexB >= 0) {
+        return +indexB > +indexA ? +indexB : +indexA;
     }
     return -1;
 }
 
-function getRequestListSources(locationId, includeHotels, includeRestaurants, includeAttractions) {
+/**
+ * @param {any} param0
+ */
+function getRequestListSources({ locationId, includeHotels = true, includeRestaurants = true, includeAttractions = false }) {
     const sources = [];
     if (includeHotels) {
         sources.push({
@@ -229,6 +232,18 @@ function getRequestListSources(locationId, includeHotels, includeRestaurants, in
     return sources;
 }
 
+/**
+ * @template {(...args: any) => any} T
+ * @typedef {ReturnType<T> extends Promise<infer U> ? U : never} UnwrappedPromiseFn
+ */
+
+/**
+ * @typedef {UnwrappedPromiseFn<typeof getClient>} Client
+ */
+
+/**
+ * @param {Apify.Session} session
+ */
 async function getClient(session) {
     const proxyUrl = global.PROXY?.newUrl(session.id);
     const response = await requestAsBrowser({
@@ -240,8 +255,19 @@ async function getClient(session) {
     const securityToken = getSecurityToken($);
     const cookies = getCookies(response);
 
+    if (!securityToken) {
+        throw new Error('Missing securityToken');
+    }
+
     // console.log({ securityToken, cookies });
 
+    /**
+     * @param {{
+     *  url: string,
+     *  method?: 'POST' | 'GET',
+     *  payload?: Record<string, any>
+     * }} params
+     */
     return async ({ url, method = 'POST', payload }) => {
         const res = await requestAsBrowser({
             url: `https://www.tripadvisor.com/data/graphql${url}`,
@@ -252,7 +278,10 @@ async function getClient(session) {
                 Cookie: cookies,
             },
             json: true,
-            payload,
+            // eslint-disable-next-line no-nested-ternary
+            payload: (typeof payload === 'string'
+                ? payload
+                : payload ? JSON.stringify(payload) : undefined),
             abortFunction: () => false,
             proxyUrl,
         });
@@ -266,6 +295,9 @@ async function getClient(session) {
     };
 }
 
+/**
+ * @param {Record<string, any>} input
+ */
 function validateInput(input) {
     const {
         locationFullName,
@@ -329,23 +361,25 @@ function validateInput(input) {
     log.info('Input validation OK');
 }
 
-async function getReviewTags(locationId) {
-    let tags = [];
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session
+ * }} params
+ */
+async function getReviewTags({ locationId, session }) {
+    /** @type {any[]} */
+    const tags = [];
     let offset = 0;
     const limit = 20;
-    const data = await getReviewTagsForLocation(locationId, limit);
-    tags = tags.concat(data);
-    if (data.paging && data.paging.next) {
-        const totalResults = data.paging.total_results;
-        const numberOfRuns = Math.ceil(totalResults / limit);
-        log.info(`Going to process ${numberOfRuns} pages of ReviewTags, ${data.paging}`);
-        for (let i = 0; i <= numberOfRuns; i++) {
-            offset += limit;
-            const data2 = await getReviewTagsForLocation(locationId, limit, offset);
-            tags = tags.concat(data2);
-        }
+    while (true) {
+        const data = await getReviewTagsForLocation({ locationId, session, limit, offset });
+        offset += limit;
+        tags.push(...data);
+        if (data.length < limit) break;
     }
-    return tags;
+
+    return tags.filter((s) => s);
 }
 
 /**

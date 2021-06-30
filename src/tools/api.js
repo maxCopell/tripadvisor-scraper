@@ -4,14 +4,25 @@ const Apify = require('apify');
 
 const { ReviewQuery } = require('./graphql-queries');
 const { LIMIT } = require('../constants');
+const general = require('./general'); // eslint-disable-line no-unused-vars
 
-const { log, requestAsBrowser } = Apify.utils;
+const { log, requestAsBrowser, sleep } = Apify.utils;
 const { API_KEY } = process.env;
 
-async function callForReview(placeId = 300974, client, offset = 0, limit = 100) {
+/**
+ *
+ * @param {{
+ *  placeId?: number | string,
+ *  client: general.Client,
+ *  offset?: number,
+ *  limit?: number
+ * }} param0
+ * @returns
+ */
+async function callForReview({ placeId = 300974, client, offset = 0, limit = 100 }) {
     const response = await client({
         url: '/batched',
-        payload: JSON.stringify([{
+        payload: [{
             variables: {
                 filterCacheKey: `locationReviewFilters_${placeId}`,
                 filters: [
@@ -32,14 +43,26 @@ async function callForReview(placeId = 300974, client, offset = 0, limit = 100) 
                 prefsCacheKey: 'locationReviewPrefs',
             },
             query: ReviewQuery,
-        }]),
+        }],
     });
 
     return response?.[0];
 }
 
-const doRequest = async ({ url, session, cookie = true, method = 'GET' }) => {
-    const proxyUrl = global.PROXY?.newUrl(session?.id || `s${Math.round(Math.random() * 9999)}`);
+/**
+ *
+ * @param {{
+ *   url: string,
+ *   session?: Apify.Session,
+ *   cookie?: boolean,
+ *   method?: 'GET' | 'POST'
+ *   retries?: number
+ * }} param0
+ *
+ * @returns {Promise<any>}
+ */
+const doRequest = async ({ url, session, cookie = true, method = 'GET', retries = 0 }) => {
+    const proxyUrl = global.PROXY?.newUrl(session?.id || `s${Math.round(Math.random() * 999999)}`);
 
     const response = await requestAsBrowser({
         url,
@@ -54,15 +77,32 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET' }) => {
     });
 
     if (![200, 304, 301, 302].includes(response.statusCode)) {
+        if (retries < 3) {
+            log.debug('Retrying request', { url, status: response.statusCode });
+
+            await sleep(1000);
+
+            return doRequest({ url, cookie: true, method, retries: retries + 1 });
+        }
+
         throw new Error(`Status code ${response.statusCode} for ${url}`);
     }
 
-    session?.setCookiesFromResponse(response);
+    if (cookie) {
+        session?.setCookiesFromResponse(response);
+    }
 
     return response;
 };
 
-async function getLocationId(searchString, session) {
+/**
+ *
+ * @param {{
+ *   searchString: string,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function getLocationId({ searchString, session }) {
     const queryString = querystring.stringify({
         query: searchString,
         alternate_tag_name: true,
@@ -89,7 +129,15 @@ async function getLocationId(searchString, session) {
     return data[0].result_object.location_id;
 }
 
-async function getPlacePrices(placeId, delay, session) {
+/**
+ *
+ * @param {{
+ *  placeId: string,
+ *  delay: () => Promise<void>,
+ *  session: Apify.Session
+ * }} params
+ */
+async function getPlacePrices({ placeId, delay, session }) {
     const dateString = global.CHECKIN_DATE || moment().format('YYYY-MM-DD');
     const url = `https://api.tripadvisor.com/api/internal/1.19/en/meta_hac/${placeId}?adults=2&checkin=${dateString}&currency=${global.CURRENCY}&lod=extended&nights=1&lang=${global.LANGUAGE}`;
     const response = await doRequest({
@@ -97,7 +145,8 @@ async function getPlacePrices(placeId, delay, session) {
         session,
         cookie: false,
     });
-    // console.log('prices', response.body);
+    console.log('prices', response.body);
+    /** @type {any} */
     const offers = response.body.data?.[0]?.hac_offers;
 
     if (!offers) {
@@ -108,14 +157,20 @@ async function getPlacePrices(placeId, delay, session) {
 
     if (!isLoaded) {
         await delay();
-        return getPlacePrices(placeId, delay, session);
+        return getPlacePrices({ placeId, delay, session });
     }
 
     return offers;
 }
 
-async function getPlaceInformation(placeId, session) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${placeId}?&lang=${global.LANGUAGE}`;
+/**
+ * @param {{
+ *   placeId: string,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function getPlaceInformation({ placeId, session }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${placeId}?currency=${global.CURRENCY}&lang=${global.LANGUAGE}`;
 
     const response = await doRequest({
         url,
@@ -137,8 +192,16 @@ function buildAttractionsUrl(locationId) {
     return `https://www.tripadvisor.com/Attractions-g${locationId}`;
 }
 
-async function callForAttractionList(locationId, session, limit = 10, offset = 0) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/attractions?limit=${limit}&offset=${offset}`;
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ *   limit?: number,
+ *   offset?: number
+ * }} params
+ */
+async function callForAttractionList({ locationId, session, limit = 10, offset = 0 }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/attractions?limit=${limit}&currency=${global.CURRENCY}&lang=${global.LANGUAGE}${offset ? `&offset=${offset}` : ''}`;
     const response = await doRequest({
         url,
         session,
@@ -146,29 +209,17 @@ async function callForAttractionList(locationId, session, limit = 10, offset = 0
     return response.body.data;
 }
 
-async function callForAttractionReview(locationId, session, limit = 10, offset = 0) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/reviews?limit=${limit}&offset=${offset}`;
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ *   limit?: number,
+ *   offset?: number
+ * }} params
+ */
+async function callForAttractionReview({ locationId, session, limit = 10, offset = 0 }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/reviews?limit=${limit}&currency=${global.CURRENCY}&lang=${global.LANGUAGE}${offset ? `&offset=${offset}` : ''}`;
 
-    const response = await doRequest({
-        url,
-        session,
-    });
-
-    return response.body.data;
-}
-
-async function getReviewTagsForLocation(locationId, session, limit = LIMIT, offset = 0) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/keywords?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}&offset=${offset}`;
-    const response = await doRequest({
-        url,
-        session,
-    });
-
-    return response.body.data;
-}
-
-async function callForRestaurantList(locationId, session, limit = LIMIT, offset = 0) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/restaurants?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}&offset=${offset}`;
     const response = await doRequest({
         url,
         session,
@@ -177,8 +228,52 @@ async function callForRestaurantList(locationId, session, limit = LIMIT, offset 
     return response.body.data;
 }
 
-async function callForHotelList(locationId, session, limit = LIMIT, offset = 0) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}&offset=${offset}`;
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ *   limit?: number,
+ *   offset?: number
+ * }} params
+ */
+async function getReviewTagsForLocation({ locationId, session, limit = LIMIT, offset = 0 }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/keywords?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
+    const response = await doRequest({
+        url,
+        session,
+    });
+
+    return response.body.data;
+}
+
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ *   limit?: number,
+ *   offset?: number
+ * }} params
+ */
+async function callForRestaurantList({ locationId, session, limit = LIMIT, offset = 0 }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/restaurants?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
+    const response = await doRequest({
+        url,
+        session,
+    });
+
+    return response.body.data;
+}
+
+/**
+ * @param {{
+ *   locationId: string,
+ *   session: Apify.Session,
+ *   limit?: number,
+ *   offset?: number
+ * }} params
+ */
+async function callForHotelList({ locationId, session, limit = LIMIT, offset = 0 }) {
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
     const response = await doRequest({
         url,
         session,

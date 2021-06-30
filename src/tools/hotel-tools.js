@@ -1,24 +1,35 @@
 const Apify = require('apify');
 
 const { utils: { log } } = Apify;
-const { getReviews, getReviewTags, randomDelay } = require('./general');
+const general = require('./general');
+
+const { getReviews, getReviewTags, randomDelay } = general;
 const { getPlacePrices } = require('./api');
 const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
-async function processHotel(placeInfo, client, dataset) {
+/**
+ *
+ * @param {{
+ *   placeInfo: unknown,
+ *   client: general.Client,
+ *   dataset?: Apify.Dataset,
+ *   session: Apify.Session,
+ * }} params
+ */
+async function processHotel({ placeInfo, client, dataset, session }) {
     const { location_id: id } = placeInfo;
     let reviews = [];
-    let placePrices;
+    const placePrices = {};
 
     try {
-        placePrices = await getPlacePrices(id, randomDelay);
+        // placePrices = await getPlacePrices({ placeId: id, delay: randomDelay, session });
     } catch (e) {
         log.warning('Hotels: Could not get place prices', { errorMessage: e });
     }
 
     if (global.INCLUDE_REVIEWS) {
         try {
-            reviews = await getReviews(id, client, +placeInfo.num_reviews);
+            reviews = await getReviews({ placeId: id, client });
         } catch (e) {
             log.exception(e, 'Could not get reviews');
             throw e;
@@ -61,14 +72,15 @@ async function processHotel(placeInfo, client, dataset) {
         reviews,
     };
     if (global.INCLUDE_REVIEW_TAGS) {
-        const tags = await getReviewTags(id);
+        const tags = await getReviewTags({ locationId: id, session });
         place.reviewTags = tags;
     }
     log.debug(`Data for hotel: ${place.name}`);
     if (dataset) {
-        checkMaxItemsLimit();
-        await dataset.pushData(place);
-        incrementSavedItems();
+        if (!checkMaxItemsLimit()) {
+            await dataset.pushData(place);
+            incrementSavedItems();
+        }
     } else {
         await Apify.setValue('OUTPUT', JSON.stringify(place), { contentType: 'application/json' });
     }
