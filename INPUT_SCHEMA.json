@@ -18,14 +18,19 @@
       "description": "Use '0' to not limit the number of places scraped",
       "default": 0
     },
+    "includeRestaurants": {
+      "title": "Include restaurants",
+      "type": "boolean",
+      "description": "If checked results includes restaurants for given location.",
+      "default": true,
+      "groupCaption": "Options",
+      "groupDescription": "Information that will be included"
+    },
     "includeHotels": {
       "title": "Include hotels",
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
-      "default": true,
-      "groupCaption": "Options",
-      "groupDescription": "Information that will be included"
-
+      "default": true
     },
     "checkInDate": {
       "title": "Check in date (YYYY-MM-DD)",
@@ -34,24 +39,18 @@
       "description": "Hotel rooms prices will be calculated for this date",
       "editor": "textfield"
     },
-    "includeRestaurants": {
-      "title": "Include restaurants",
-      "type": "boolean",
-      "description": "If checked results includes restaurants for given location.",
-      "default": true
-    },
-    "includeTags": {
-      "title": "Include restaurant tags",
-      "description": "Include restaurant tags",
-      "default": false,
-      "type": "boolean",
-      "editor": "checkbox"
-    },
     "includeAttractions": {
       "title": "Include things to do [BETA]",
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
       "default": false
+    },
+    "includeTags": {
+      "title": "Include review tags",
+      "description": "Include review tags",
+      "default": false,
+      "type": "boolean",
+      "editor": "checkbox"
     },
     "includeReviews": {
       "title": "Include reviews",
