@@ -18,6 +18,12 @@
       "description": "Use '0' to not limit the number of places scraped",
       "default": 0
     },
+    "includeHotels": {
+      "title": "Include hotels",
+      "type": "boolean",
+      "description": "If checked results includes hotels for given location.",
+      "default": true
+    },
     "includeRestaurants": {
       "title": "Include restaurants",
       "type": "boolean",
@@ -38,12 +44,6 @@
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
       "default": false
-    },
-    "includeHotels": {
-      "title": "Include Hotels",
-      "type": "boolean",
-      "description": "If checked results includes hotels for given location.",
-      "default": true
     },
     "includeReviews": {
       "title": "Include reviews",
