@@ -29,9 +29,28 @@ async function callForSearch({ query, client }) {
                     searchCenter: null,
                     types: [
                         'LOCATION',
+                        'QUERY_SUGGESTION',
+                        'LIST_RESULT',
                     ],
                     locationTypes: [
                         'GEO',
+                        'AIRPORT',
+                        'ACCOMMODATION',
+                        'ATTRACTION',
+                        'ATTRACTION_PRODUCT',
+                        'EATERY',
+                        'NEIGHBORHOOD',
+                        'AIRLINE',
+                        'SHOPPING',
+                        'UNIVERSITY',
+                        'GENERAL_HOSPITAL',
+                        'PORT',
+                        'FERRY',
+                        'CORPORATION',
+                        'VACATION_RENTAL',
+                        'SHIP',
+                        'CRUISE_LINE',
+                        'CAR_RENTAL_OFFICE',
                     ],
                     userId: null,
                     context: {
@@ -46,7 +65,7 @@ async function callForSearch({ query, client }) {
     });
 
     try {
-        return response[0].data.Typeahead_autocomplete.results[0].documentId;
+        return response[0].data.Typeahead_autocomplete.results[0].locationId;
     } catch (e) {
         log.debug('search failed', { e: e.message, data: response[0]?.data, results: response?.[0]?.data?.Typeahead_autocomplete });
         throw new Error(`Nothing found for "${query}"`);

@@ -13,9 +13,9 @@
       "editor": "textfield"
     },
     "locationFullName": {
-      "title": "Location",
+      "title": "Region",
       "type": "string",
-      "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location",
+      "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location. Input countries, cities, neighborhoods",
       "default": "Prague",
       "prefill": "Prague",
       "editor": "textfield"
