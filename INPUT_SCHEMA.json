@@ -4,14 +4,6 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "lastReviewDate": {
-      "title": "Reviews since date (YYYY-MM-DD)",
-      "type": "string",
-      "description": "It is a date where the scrapper stops loading older reviews ",
-      "default": "",
-      "prefill": "2021-01-01",
-      "editor": "textfield"
-    },
     "locationFullName": {
       "title": "Region",
       "type": "string",
@@ -20,6 +12,12 @@
       "prefill": "Prague",
       "editor": "textfield"
     },
+    "maxItems": {
+      "title": "Limit the number of places to be scraped",
+      "type": "integer",
+      "description": "Use '0' to not limit the number of places scraped",
+      "default": 0
+    },
     "includeRestaurants": {
       "title": "Include restaurants",
       "type": "boolean",
@@ -27,6 +25,13 @@
       "default": true,
       "groupCaption": "Options",
       "groupDescription": "Information that will be included"
+    },
+    "includeTags": {
+      "title": "Include restaurant tags",
+      "description": "Include restaurant tags",
+      "default": false,
+      "type": "boolean",
+      "editor": "checkbox"
     },
     "includeAttractions": {
       "title": "Include things to do [BETA]",
@@ -46,24 +51,19 @@
       "description": "If checked results includes reviews data",
       "default": false
     },
+    "lastReviewDate": {
+      "title": "Reviews since date (YYYY-MM-DD)",
+      "type": "string",
+      "description": "It is a date where the scrapper stops loading older reviews ",
+      "default": "",
+      "prefill": "2021-01-01",
+      "editor": "textfield"
+    },
     "maxReviews": {
       "title": "Limit reviews for each place",
       "type": "integer",
       "description": "Use '0' to not limit the number of reviews scraped",
       "default": 0
-    },
-    "maxItems": {
-      "title": "Limit the number of places to be scraped",
-      "type": "integer",
-      "description": "Use '0' to not limit the number of places scraped",
-      "default": 0
-    },
-    "includeTags": {
-      "title": "Include restaurant tags",
-      "description": "Include restaurant tags",
-      "default": false,
-      "type": "boolean",
-      "editor": "checkbox"
     },
     "locationId": {
       "title": "Location id",
