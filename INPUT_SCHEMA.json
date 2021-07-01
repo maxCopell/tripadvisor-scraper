@@ -69,7 +69,6 @@
       "type": "string",
       "description": "It is a date where the scrapper stops loading older reviews ",
       "default": "",
-      "prefill": "2021-01-01",
       "editor": "textfield"
     },
     "locationId": {
