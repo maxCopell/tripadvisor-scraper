@@ -8,10 +8,11 @@ const {
     buildRestaurantUrl,
     buildAttractionsUrl,
     getReviewTagsForLocation,
+    callForSearch,
 } = require('./api');
 const { getConfig } = require('./data-limits');
 
-const { log, requestAsBrowser } = Apify.utils;
+const { log, sleep, requestAsBrowser } = Apify.utils;
 
 function randomDelay(minimum = 200, maximum = 600) {
     const min = Math.ceil(minimum);
@@ -41,6 +42,17 @@ function getCookies(response) {
             return cookie[0];
         }
     }).filter((s) => s).join('; ');
+}
+
+/**
+ *
+ * @param {string} query
+ */
+async function getLocationId(query) {
+    return callForSearch({
+        query,
+        client: await getClient(),
+    });
 }
 
 /**
@@ -242,18 +254,28 @@ function getRequestListSources({ locationId, includeHotels = true, includeRestau
  */
 
 /**
- * @param {Apify.Session} session
+ * @param {Apify.Session} [session]
  */
 async function getClient(session) {
-    const proxyUrl = global.PROXY?.newUrl(session.id);
-    const response = await requestAsBrowser({
-        url: 'https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html',
-        proxyUrl,
-    });
+    let securityToken;
+    let cookies;
+    let proxyUrl;
 
-    const $ = cheerio.load(response.body);
-    const securityToken = getSecurityToken($);
-    const cookies = getCookies(response);
+    const updateData = async (id = session?.id) => {
+        proxyUrl = global.PROXY?.newUrl(id ?? `${Math.round(Math.random() * 100000)}`);
+
+        const response = await requestAsBrowser({
+            url: 'https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html',
+            proxyUrl,
+            retries: 5,
+        });
+
+        const $ = cheerio.load(response.body);
+        securityToken = getSecurityToken($);
+        cookies = getCookies(response);
+    };
+
+    await updateData();
 
     if (!securityToken) {
         throw new Error('Missing securityToken');
@@ -266,9 +288,10 @@ async function getClient(session) {
      *  url: string,
      *  method?: 'POST' | 'GET',
      *  payload?: Record<string, any>
+     *  retries?: number
      * }} params
      */
-    return async ({ url, method = 'POST', payload }) => {
+    return async function req({ url, method = 'POST', payload, retries = 0 }) {
         const res = await requestAsBrowser({
             url: `https://www.tripadvisor.com/data/graphql${url}`,
             method,
@@ -287,6 +310,14 @@ async function getClient(session) {
         });
 
         if (res.statusCode !== 200) {
+            if ((res.statusCode === 403 && retries < 10) || retries < 3) {
+                await sleep(1000);
+                if (!session?.id) {
+                    await updateData();
+                }
+                log.debug('Retrying', { status: res.statusCode, url });
+                return req({ url, method, payload, retries: retries + 1 });
+            }
             session?.retire();
             throw new Error(`Status code ${res.statusCode}`);
         }
@@ -446,4 +477,5 @@ module.exports = {
     getReviews,
     findLastReviewIndex: findLastReviewIndexByDate,
     proxyConfiguration,
+    getLocationId,
 };

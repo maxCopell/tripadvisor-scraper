@@ -16,8 +16,8 @@
       "title": "Location",
       "type": "string",
       "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location",
-      "default": "",
-      "prefill": "",
+      "default": "Prague",
+      "prefill": "Prague",
       "editor": "textfield"
     },
     "includeRestaurants": {

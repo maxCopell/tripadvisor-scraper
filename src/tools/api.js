@@ -1,13 +1,57 @@
-const querystring = require('querystring');
 const moment = require('moment');
 const Apify = require('apify');
 
-const { ReviewQuery } = require('./graphql-queries');
+const { ReviewQuery, SearchQuery } = require('./graphql-queries');
 const { LIMIT } = require('../constants');
 const general = require('./general'); // eslint-disable-line no-unused-vars
 
 const { log, requestAsBrowser, sleep } = Apify.utils;
-const { API_KEY } = process.env;
+const { API_KEY, UUID } = process.env;
+
+/**
+ * @param {{
+ *   query: string,
+ *   client: general.Client,
+ * }} param0
+ */
+async function callForSearch({ query, client }) {
+    const response = await client({
+        url: '/batched',
+        payload: [{
+            query: SearchQuery,
+            variables: {
+                request: {
+                    query,
+                    limit: 1,
+                    scope: 'WORLDWIDE',
+                    locale: 'en-US',
+                    scopeGeoId: 1,
+                    searchCenter: null,
+                    types: [
+                        'LOCATION',
+                    ],
+                    locationTypes: [
+                        'GEO',
+                    ],
+                    userId: null,
+                    context: {
+                        typeaheadId: Date.now(),
+                        uiOrigin: 'SINGLE_SEARCH_HERO',
+                    },
+                    articleCategories: [],
+                    enabledFeatures: ['typeahead-q'],
+                },
+            },
+        }],
+    });
+
+    try {
+        return response[0].data.Typeahead_autocomplete.results[0].documentId;
+    } catch (e) {
+        log.debug('search failed', { e: e.message, data: response[0]?.data, results: response?.[0]?.data?.Typeahead_autocomplete });
+        throw new Error(`Nothing found for "${query}"`);
+    }
+}
 
 /**
  *
@@ -69,6 +113,7 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET', retries 
         method,
         headers: {
             'X-TripAdvisor-API-Key': API_KEY,
+            // 'X-TripAdvisor-UUID': UUID,
             ...(cookie ? { Cookie: session?.getCookieString(url) } : {}),
         },
         abortFunction: () => false,
@@ -80,7 +125,7 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET', retries 
         if (retries < 3) {
             log.debug('Retrying request', { url, status: response.statusCode });
 
-            await sleep(1000);
+            await sleep(3000);
 
             return doRequest({ url, cookie: true, method, retries: retries + 1 });
         }
@@ -94,40 +139,6 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET', retries 
 
     return response;
 };
-
-/**
- *
- * @param {{
- *   searchString: string,
- *   session: Apify.Session,
- * }} params
- */
-async function getLocationId({ searchString, session }) {
-    const queryString = querystring.stringify({
-        query: searchString,
-        alternate_tag_name: true,
-        auto_broaden: true,
-        category_type: 'neighborhoods,geos',
-        currency: global.CURRENCY,
-        lang: global.LANGUAGE,
-    });
-
-    const url = `https://api.tripadvisor.com/api/internal/1.14/typeahead?${queryString}`;
-    const result = await doRequest({
-        url,
-        method: 'POST',
-        session,
-        cookie: false,
-    });
-
-    const { data } = result.body;
-
-    if (!data) {
-        throw new Error(`Could not find location "${searchString}" reason`);
-    }
-
-    return data[0].result_object.location_id;
-}
 
 /**
  *
@@ -284,7 +295,6 @@ async function callForHotelList({ locationId, session, limit = LIMIT, offset = 0
 
 module.exports = {
     callForReview,
-    getLocationId,
     getPlacePrices,
     getPlaceInformation,
     buildHotelUrl,
@@ -295,4 +305,5 @@ module.exports = {
     buildAttractionsUrl,
     callForAttractionList,
     callForAttractionReview,
+    callForSearch,
 };

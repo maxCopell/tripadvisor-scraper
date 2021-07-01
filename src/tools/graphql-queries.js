@@ -303,43 +303,118 @@ const ReviewQuery = `query ReviewListQuery($locationId: Int!, $offset: Int, $lim
 `;
 
 const SearchQuery = `query TypeaheadQuery($request: Typeahead_RequestInput!) {
-    Typeahead_autocomplete(request: $request) {
-      resultsId
-      partial
-      results {
-        __typename
-        ...TypeAhead_LocationItemFields
-        ...TypeAhead_UserProfileFields
-        ...TypeAhead_QuerySuggestionFields
-        ...TypeAhead_RescueResultFields
-        ...TypeAhead_ListResultFields
-      }
+  Typeahead_autocomplete(request: $request) {
+    resultsId
+    partial
+    results {
+      __typename
+      ...TypeAhead_LocationItemFields
+      ...TypeAhead_UserProfileFields
+      ...TypeAhead_QuerySuggestionFields
+      ...TypeAhead_RescueResultFields
+      ...TypeAhead_ListResultFields
     }
   }
+}
 
-  fragment TypeAhead_LocationItemFields on Typeahead_LocationItem {
-    documentId
-    locationId
-    details {
-      ...TypeAheadLocationInformationFields
+fragment TypeAhead_LocationItemFields on Typeahead_LocationItem {
+  documentId
+  locationId
+  details {
+    ...TypeAheadLocationInformationFields
+  }
+}
+
+fragment TypeAhead_UserProfileFields on Typeahead_UserProfileItem {
+  documentId
+  userId
+  details {
+    ...TypeAheadUserProfileFields
+  }
+}
+
+fragment TypeAheadLocationInformationFields on LocationInformation {
+  localizedName
+  localizedAdditionalNames {
+    longOnlyHierarchy
+  }
+  streetAddress {
+    street1
+  }
+  locationV2 {
+    placeType
+    names {
+      longOnlyHierarchyTypeaheadV2
+    }
+    vacationRentalsRoute {
+      url
     }
   }
-
-  fragment TypeAhead_UserProfileFields on Typeahead_UserProfileItem {
-    documentId
-    userId
-    details {
-      ...TypeAheadUserProfileFields
+  url
+  HOTELS_URL: hotelsUrl
+  ATTRACTIONS_URL: attractionOverviewURL
+  RESTAURANTS_URL: restaurantOverviewURL
+  placeType
+  latitude
+  longitude
+  isGeo
+  thumbnail {
+    photoSizeDynamic {
+      maxWidth
+      maxHeight
+      urlTemplate
     }
   }
+}
 
-  fragment TypeAheadLocationInformationFields on LocationInformation {
+fragment TypeAheadUserProfileFields on MemberProfile {
+  username
+  displayName
+  followerCount
+  isVerified
+  isFollowing
+  avatar {
+    photoSizeDynamic {
+      maxWidth
+      maxHeight
+      urlTemplate
+    }
+  }
+  route {
+    url
+  }
+}
+
+fragment TypeAhead_QuerySuggestionFields on Typeahead_QuerySuggestionItem {
+  documentId
+  text
+  route {
+    url
+  }
+  buCategory
+  parentGeoDetails {
+    names {
+      longOnlyHierarchyTypeaheadV2
+    }
+  }
+}
+
+fragment TypeAhead_RescueResultFields on Typeahead_RescueResultItem {
+  documentId
+  text
+}
+
+fragment TypeAhead_ListResultFields on Typeahead_ListResultItem {
+  documentId
+  locationId
+  listResultType
+  FORUMListURL {
+    url
+  }
+  details {
     localizedName
     localizedAdditionalNames {
       longOnlyHierarchy
-    }
-    streetAddress {
-      street1
     }
     locationV2 {
       placeType
@@ -350,14 +425,9 @@ const SearchQuery = `query TypeaheadQuery($request: Typeahead_RequestInput!) {
         url
       }
     }
-    url
-    HOTELS_URL: hotelsUrl
-    ATTRACTIONS_URL: attractionOverviewURL
-    RESTAURANTS_URL: restaurantOverviewURL
-    placeType
-    latitude
-    longitude
-    isGeo
+    HOTELListURL: hotelsUrl
+    RESTAURANTListURL: restaurantOverviewURL
+    ATTRACTIONListURL: attractionOverviewURL
     thumbnail {
       photoSizeDynamic {
         maxWidth
@@ -366,77 +436,7 @@ const SearchQuery = `query TypeaheadQuery($request: Typeahead_RequestInput!) {
       }
     }
   }
-
-  fragment TypeAheadUserProfileFields on MemberProfile {
-    username
-    displayName
-    followerCount
-    isVerified
-    isFollowing
-    avatar {
-      photoSizeDynamic {
-        maxWidth
-        maxHeight
-        urlTemplate
-      }
-    }
-    route {
-      url
-    }
-  }
-
-  fragment TypeAhead_QuerySuggestionFields on Typeahead_QuerySuggestionItem {
-    documentId
-    text
-    route {
-      url
-    }
-    buCategory
-    parentGeoDetails {
-      names {
-        longOnlyHierarchyTypeaheadV2
-      }
-    }
-  }
-
-  fragment TypeAhead_RescueResultFields on Typeahead_RescueResultItem {
-    documentId
-    text
-  }
-
-  fragment TypeAhead_ListResultFields on Typeahead_ListResultItem {
-    documentId
-    locationId
-    listResultType
-    FORUMListURL {
-      url
-    }
-    details {
-      localizedName
-      localizedAdditionalNames {
-        longOnlyHierarchy
-      }
-      locationV2 {
-        placeType
-        names {
-          longOnlyHierarchyTypeaheadV2
-        }
-        vacationRentalsRoute {
-          url
-        }
-      }
-      HOTELListURL: hotelsUrl
-      RESTAURANTListURL: restaurantOverviewURL
-      ATTRACTIONListURL: attractionOverviewURL
-      thumbnail {
-        photoSizeDynamic {
-          maxWidth
-          maxHeight
-          urlTemplate
-        }
-      }
-    }
-  }
+}
 `;
 
 const PriceQuery = `query BusinessAdvantageQuery($locationId: Int!, $deviceType: BaAggregation_DeviceType, $trafficSource: BaAggregation_TrafficSource, $commerceCountryId: Int!, $servletName: String!, $hotelTravelInfo: BaAggregation_HotelTravelInfoInput, $withContactLinks: Boolean!) {

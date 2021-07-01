@@ -1,6 +1,7 @@
 const Apify = require('apify');
 
 process.env.API_KEY = '3c7beec8-846d-4377-be03-71cae6145fdc';
+
 const general = require('./tools/general');
 
 const {
@@ -10,6 +11,7 @@ const {
     randomDelay,
     validateInput,
     proxyConfiguration,
+    getLocationId,
 } = general;
 
 const { processRestaurant } = require('./tools/restaurant-tools');
@@ -17,7 +19,6 @@ const { processHotel } = require('./tools/hotel-tools');
 const { processAttraction, getAttractions } = require('./tools/attraction-tools');
 
 const {
-    getLocationId,
     buildRestaurantUrl,
     getPlaceInformation,
     callForRestaurantList,
@@ -78,7 +79,7 @@ Apify.main(async () => {
         }
         log.info(`Processing locationId: ${locationId}`);
 
-        startUrls.push(...getRequestListSources(input));
+        startUrls.push(...getRequestListSources({ ...input, locationId }));
     }
 
     if (restaurantId) {
