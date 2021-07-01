@@ -22,15 +22,23 @@
       "title": "Include hotels",
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
-      "default": true
+      "default": true,
+      "groupCaption": "Options",
+      "groupDescription": "Information that will be included"
+
+    },
+    "checkInDate": {
+      "title": "Check in date (YYYY-MM-DD)",
+      "type": "string",
+      "default": "",
+      "description": "Hotel rooms prices will be calculated for this date",
+      "editor": "textfield"
     },
     "includeRestaurants": {
       "title": "Include restaurants",
       "type": "boolean",
       "description": "If checked results includes restaurants for given location.",
-      "default": true,
-      "groupCaption": "Options",
-      "groupDescription": "Information that will be included"
+      "default": true
     },
     "includeTags": {
       "title": "Include restaurant tags",
@@ -51,6 +59,12 @@
       "description": "If checked results includes reviews data",
       "default": false
     },
+    "maxReviews": {
+      "title": "Limit reviews for each place",
+      "type": "integer",
+      "description": "Use '0' to not limit the number of reviews scraped",
+      "default": 0
+    },
     "lastReviewDate": {
       "title": "Reviews since date (YYYY-MM-DD)",
       "type": "string",
@@ -58,12 +72,6 @@
       "default": "",
       "prefill": "2021-01-01",
       "editor": "textfield"
-    },
-    "maxReviews": {
-      "title": "Limit reviews for each place",
-      "type": "integer",
-      "description": "Use '0' to not limit the number of reviews scraped",
-      "default": 0
     },
     "locationId": {
       "title": "Location id",
@@ -82,13 +90,6 @@
       "type": "string",
       "description": "Id of restaurant",
       "editor": "hidden"
-    },
-    "checkInDate": {
-      "title": "Check in date (YYYY-MM-DD)",
-      "type": "string",
-      "default": "",
-      "description": "Hotel rooms prices will be calculated for this date",
-      "editor": "textfield"
     },
     "language": {
       "title": "Language",
