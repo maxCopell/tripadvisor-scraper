@@ -62,7 +62,8 @@
       "title": "Limit reviews for each place",
       "type": "integer",
       "description": "Use '0' to not limit the number of reviews scraped",
-      "default": 0
+      "default": 0,
+      "prefill": 0
     },
     "lastReviewDate": {
       "title": "Reviews since date (YYYY-MM-DD)",
