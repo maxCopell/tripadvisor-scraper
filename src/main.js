@@ -184,10 +184,10 @@ Apify.main(async () => {
                     throw new Error('Hotel list is empty');
                 }
 
-                await resolveInBatches(hotelList.map((hotel) => {
+                await resolveInBatches(hotelList.map((hotel, index) => {
                     log.debug(`Processing hotel: ${hotel.name}`);
 
-                    if (checkMaxItemsLimit(10)) return () => {};
+                    if (checkMaxItemsLimit(index)) return () => {};
 
                     return () => processHotel({ placeInfo: hotel, session, client, dataset: generalDataset });
                 }));
@@ -231,10 +231,10 @@ Apify.main(async () => {
                     throw new Error(`Restaurant list is empty`);
                 }
 
-                await resolveInBatches(restaurantList.map((restaurant) => {
+                await resolveInBatches(restaurantList.map((restaurant, index) => {
                     log.debug(`Processing restaurant: ${restaurant.name}`);
 
-                    if (checkMaxItemsLimit(10)) return () => {};
+                    if (checkMaxItemsLimit(index)) return () => {};
 
                     return () => processRestaurant({
                         placeInfo: restaurant,
@@ -267,8 +267,8 @@ Apify.main(async () => {
                 try {
                     const attractions = await getAttractions({ locationId, session });
                     log.info(`Found ${attractions.length} attractions`);
-                    await resolveInBatches(attractions.map((attr) => {
-                        if (checkMaxItemsLimit(10)) return () => {};
+                    await resolveInBatches(attractions.map((attr, index) => {
+                        if (checkMaxItemsLimit(index)) return () => {};
 
                         return () => processAttraction({
                             attraction: attr,
