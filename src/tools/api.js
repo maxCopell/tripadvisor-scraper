@@ -130,6 +130,8 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET', retries 
     const response = await requestAsBrowser({
         url,
         method,
+        useInsecureHttpParser: false,
+        ignoreSslErrors: false,
         headers: {
             'X-TripAdvisor-API-Key': API_KEY,
             // 'X-TripAdvisor-UUID': UUID,
@@ -175,7 +177,7 @@ async function getPlacePrices({ placeId, delay, session }) {
         session,
         cookie: false,
     });
-    console.log('prices', response.body);
+    // console.log('prices', response.body.data);
     /** @type {any} */
     const offers = response.body.data?.[0]?.hac_offers;
 
