@@ -1,5 +1,5 @@
-const LIMIT = 0;
+const API_RESULTS_PER_PAGE = 50;
 
 module.exports = {
-    LIMIT,
+    API_RESULTS_PER_PAGE,
 };
