@@ -2,7 +2,7 @@ const moment = require('moment');
 const Apify = require('apify');
 
 const { ReviewQuery, SearchQuery } = require('./graphql-queries');
-const { LIMIT } = require('../constants');
+const { API_RESULTS_PER_PAGE } = require('../constants');
 const general = require('./general'); // eslint-disable-line no-unused-vars
 
 const { log, requestAsBrowser, sleep } = Apify.utils;
@@ -268,7 +268,7 @@ async function callForAttractionReview({ locationId, session, limit = 10, offset
  *   offset?: number
  * }} params
  */
-async function getReviewTagsForLocation({ locationId, session, limit = LIMIT, offset = 0 }) {
+async function getReviewTagsForLocation({ locationId, session, limit = API_RESULTS_PER_PAGE, offset = 0 }) {
     const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/keywords?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
     const response = await doRequest({
         url,
@@ -286,7 +286,7 @@ async function getReviewTagsForLocation({ locationId, session, limit = LIMIT, of
  *   offset?: number
  * }} params
  */
-async function callForRestaurantList({ locationId, session, limit = LIMIT, offset = 0 }) {
+async function callForRestaurantList({ locationId, session, limit = API_RESULTS_PER_PAGE, offset = 0 }) {
     const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/restaurants?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
     const response = await doRequest({
         url,
@@ -297,6 +297,19 @@ async function callForRestaurantList({ locationId, session, limit = LIMIT, offse
 }
 
 /**
+ *
+ * @param {string} locationId
+ * @param {string} currency
+ * @param {string} language
+ * @param {number} limit
+ * @param {number} offset
+ * @returns {string} url
+ */
+function getHostelListUrl(locationId, currency, language, limit, offset) {
+    return `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${currency}&lang=${language}&limit=${limit || API_RESULTS_PER_PAGE}${offset ? `&offset=${offset}` : ''}`;
+}
+
+/**
  * @param {{
  *   locationId: string,
  *   session: Apify.Session,
@@ -304,14 +317,14 @@ async function callForRestaurantList({ locationId, session, limit = LIMIT, offse
  *   offset?: number
  * }} params
  */
-async function callForHotelList({ locationId, session, limit = LIMIT, offset = 0 }) {
-    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/hotels?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
+async function callForHotelList({ locationId, session, limit = API_RESULTS_PER_PAGE, offset = 0 }) {
+    const url = getHostelListUrl(locationId, global.CURRENCY, global.LANGUAGE, limit, offset);
     const response = await doRequest({
         url,
         session,
     });
 
-    return response.body.data;
+    return response.body;
 }
 
 module.exports = {
@@ -327,4 +340,5 @@ module.exports = {
     callForAttractionList,
     callForAttractionReview,
     callForSearch,
+    getHostelListUrl,
 };
