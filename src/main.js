@@ -160,13 +160,11 @@ Apify.main(async () => {
                 }
 
                 // eslint-disable-next-line no-nested-ternary
-                const maxLimit = maxItems === 0
-                    ? paging.total_results
-                    : (paging.results < maxItems ? maxItems : paging.results);
+                const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
 
                 log.info(`Processing hotels with last data offset: ${maxLimit}/${API_RESULTS_PER_PAGE}`);
                 const promises = [];
-                for (let i = initialRequest.length; i < maxLimit; i += initialRequest.length) {
+                for (let i = initialRequest.length; i < maxLimit; i += API_RESULTS_PER_PAGE) {
                     promises.push(() => requestQueue.addRequest({
                         url: getHostelListUrl(locationId, global.CURRENCY, global.LANGUAGE, maxLimit, i),
                         userData: { hotelList: true, offset: i, limit: API_RESULTS_PER_PAGE },
@@ -201,7 +199,7 @@ Apify.main(async () => {
                 // Process initial restaurantList url and add others with pagination to request queue
                 log.debug('INITIAL RESTAURANT LIST');
                 const promises = [];
-                const initialRequest = await callForRestaurantList({ locationId, session });
+                const { data: initialRequest, paging } = await callForRestaurantList({ locationId, session });
 
                 if (!initialRequest?.length) {
                     request.noRetry = true;
@@ -209,12 +207,10 @@ Apify.main(async () => {
                 }
 
                 // eslint-disable-next-line no-nested-ternary
-                const maxOffset = maxItems === 0
-                    ? API_RESULTS_PER_PAGE
-                    : (initialRequest.length < maxItems ? maxItems : initialRequest.length);
+                const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
 
-                log.info(`Processing restaurants with last data offset: ${maxOffset}`);
-                for (let i = 0; i < maxOffset; i += API_RESULTS_PER_PAGE) {
+                log.info(`Processing restaurants with last data offset: ${maxLimit}`);
+                for (let i = initialRequest.length; i < maxLimit; i += API_RESULTS_PER_PAGE) {
                     log.info(`Adding restaurants search page with offset: ${i} to list`);
 
                     promises.push(() => requestQueue.addRequest({
@@ -228,7 +224,7 @@ Apify.main(async () => {
             } else if (request.userData.restaurantList) {
                 log.debug('RESTAURANT LIST WITH OFFSET');
                 log.info(`Processing restaurant list with offset ${request.userData.offset}`);
-                const restaurantList = await callForRestaurantList({
+                const { data: restaurantList } = await callForRestaurantList({
                     locationId,
                     session,
                     limit: request.userData.limit,

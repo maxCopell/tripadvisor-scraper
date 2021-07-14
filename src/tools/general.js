@@ -92,8 +92,7 @@ const processReview = (review, remoteId) => {
     log.debug(`Processing review: ${title}`);
     if (userProfile) {
         const { hometown, contributionCounts = {}, username } = userProfile;
-        const { sumReview } = contributionCounts;
-        userContributions = sumReview;
+        userContributions = contributionCounts?.sumReview;
         userLocation = hometown.fallbackString;
         userName = username;
 
