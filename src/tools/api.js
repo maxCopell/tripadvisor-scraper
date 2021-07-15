@@ -285,6 +285,7 @@ async function getReviewTagsForLocation({ locationId, session, limit = API_RESUL
  *   limit?: number,
  *   offset?: number
  * }} params
+ * @returns {Promise<{data: any, paging: {total_results: number, results: number}}>} responseBody
  */
 async function callForRestaurantList({ locationId, session, limit = API_RESULTS_PER_PAGE, offset = 0 }) {
     const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/restaurants?currency=${global.CURRENCY}&lang=${global.LANGUAGE}&limit=${limit}${offset ? `&offset=${offset}` : ''}`;
@@ -293,7 +294,7 @@ async function callForRestaurantList({ locationId, session, limit = API_RESULTS_
         session,
     });
 
-    return response.body.data;
+    return response.body;
 }
 
 /**
