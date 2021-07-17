@@ -115,7 +115,7 @@ async function getAttractionDetail({ attraction, session }) {
     }
 
     attraction.reviews = reviews;
-    return attraction;
+    return { type: 'ATTRACTION', ...attraction };
 }
 
 /**
