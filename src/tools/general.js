@@ -191,7 +191,7 @@ async function getReviews({ placeId, client }) {
             reviews.forEach((review) => result.push(processReview(review)));
         }
 
-        if (reviews.length < limit || result.length >= maxReviews || shouldSlice) break;
+        if (reviews.length < limit || (maxReviews > 0 && result.length >= maxReviews) || shouldSlice) break;
     }
 
     return result;
