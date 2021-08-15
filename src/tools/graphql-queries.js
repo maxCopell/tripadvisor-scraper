@@ -459,7 +459,7 @@ const PriceQuery = `query BusinessAdvantageQuery($locationId: Int!, $deviceType:
 `;
 
 module.exports = {
-    ReviewQuery,
+    // ReviewQuery,
     SearchQuery,
-    PriceQuery,
+    // PriceQuery,
 };
