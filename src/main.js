@@ -11,7 +11,6 @@ const {
     randomDelay,
     validateInput,
     proxyConfiguration,
-    getLocationId,
 } = general;
 
 const { processRestaurant } = require('./tools/restaurant-tools');
@@ -25,6 +24,7 @@ const {
     callForHotelList,
     buildHotelUrl,
     getHostelListUrl,
+    getLocationId,
 } = require('./tools/api');
 
 const { API_RESULTS_PER_PAGE } = require('./constants');

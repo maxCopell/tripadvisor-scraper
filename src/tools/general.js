@@ -45,17 +45,6 @@ function getCookies(response) {
 }
 
 /**
- *
- * @param {string} query
- */
-async function getLocationId(query) {
-    return callForSearch({
-        query,
-        client: await getClient(),
-    });
-}
-
-/**
  * @param {Array<() => Promise<any> | Promise<any>>} promiseArray
  * @param {number} [batchLength]
  */
@@ -476,5 +465,4 @@ module.exports = {
     getReviews,
     findLastReviewIndex: findLastReviewIndexByDate,
     proxyConfiguration,
-    getLocationId,
 };

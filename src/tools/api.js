@@ -328,6 +328,35 @@ async function callForHotelList({ locationId, session, limit = API_RESULTS_PER_P
     return response.body;
 }
 
+/**
+ *
+ * @param {string} query
+ */
+async function getLocationId(query) {
+    const params = new URLSearchParams();
+    params.append('query', query);
+    params.append('lang', 'en');
+    params.append('alternate_tag_name', query);
+    params.append('auto_broaden', 'true');
+    params.append('category_type', 'neighborhoods,geos');
+    params.append('currency', 'USD');
+
+    const url = `https://api.tripadvisor.com/api/internal/1.14/typeahead?${params.toString()}`;
+    let error;
+    let response;
+    try {
+        response = await doRequest({ url });
+    } catch (err) {
+        error = err;
+    }
+
+    const { data } = response.body;
+    if (!data || error) {
+        throw new Error(`Could not find location "${query}" reason: ${error.message}`);
+    }
+    return data[0].result_object.location_id;
+}
+
 module.exports = {
     callForReview,
     getPlacePrices,
@@ -342,4 +371,5 @@ module.exports = {
     callForAttractionReview,
     callForSearch,
     getHostelListUrl,
+    getLocationId,
 };
