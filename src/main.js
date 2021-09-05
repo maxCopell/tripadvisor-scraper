@@ -288,10 +288,10 @@ Apify.main(async () => {
                     session,
                 });
             } else if (request.userData.initialAttraction) {
-                log.debug('INITIAL ATTRACTION');
+                log.debug('ATTRACTIONS');
                 try {
                     const attractions = await getAttractions({ locationId, session });
-                    log.info(`Found ${attractions.length} attractions`);
+                    log.info(`Scraped ${attractions.length} attractions`);
                     await resolveInBatches(attractions.map((attr, index) => {
                         if (checkMaxItemsLimit(index)) return () => {};
                         return () => processAttraction({

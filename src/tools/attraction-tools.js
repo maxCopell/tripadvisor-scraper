@@ -12,19 +12,32 @@ const { findLastReviewIndex } = require('./general');
  * }} params
  */
 async function getAttractions({ locationId, session }) {
+    let offset = 0;
+    const limit = 200;
+    let attractionsCount = 0;
+
+    const { paging: { total_results: totalResults } } = await callForAttractionList({ locationId, session, limit: 1, offset });
+    log.info(`Found ${totalResults} attractions for the location id ${locationId}`);
+
+    const attractionsStore = await Apify.openKeyValueStore(`attractions-${locationId}`);
+
+    let hasReachedLimit = false;
+    while (!hasReachedLimit) {
+        log.debug(`Going to process offset ${offset} for attractions ${locationId}`);
+        const { data, paging: { next } } = await callForAttractionList({ locationId, session, limit, offset });
+        offset += limit;
+        attractionsCount += data.length;
+
+        await Promise.all(data.map((attraction) => attractionsStore.setValue(`${attraction.location_id}`, attraction)));
+        if (!next || attractionsCount >= Number(totalResults) || checkMaxItemsLimit(attractionsCount)) {
+            hasReachedLimit = true;
+        }
+    }
+
     /** @type {any[]} */
     const attractions = [];
-    let offset = 0;
-    const limit = 20;
-
-    while (true) {
-        log.debug(`Going to process offset ${offset} for attractions ${locationId}`);
-        const data = await callForAttractionList({ locationId, session, limit, offset });
-        offset += limit;
-        attractions.push(...data);
-
-        if (data.length < limit || checkMaxItemsLimit(data.length)) break;
-    }
+    await attractionsStore.forEachKey(async (key) => attractions.push(await attractionsStore.getValue(key)));
+    await attractionsStore.drop();
     return attractions;
 }
 
