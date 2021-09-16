@@ -5,17 +5,16 @@
   "schemaVersion": 1,
   "properties": {
     "locationFullName": {
-      "title": "Region",
+      "title": "Search",
       "type": "string",
       "description": "Location name as you would enter to TripAdvisor search. Actor takes the first result as desired location. Input countries, cities, neighborhoods",
-      "default": "Prague",
       "prefill": "Prague",
       "editor": "textfield"
     },
     "maxItems": {
-      "title": "Limit the number of places to be scraped",
+      "title": "Max search results",
       "type": "integer",
-      "description": "Use '0' to not limit the number of places scraped",
+      "description": "Limit the number of places to be scraped. Use '0' to not limit the number of places scraped",
       "default": 0
     },
     "includeRestaurants": {
@@ -23,8 +22,7 @@
       "type": "boolean",
       "description": "If checked results includes restaurants for given location.",
       "default": true,
-      "groupCaption": "Options",
-      "groupDescription": "Information that will be included"
+      "sectionCaption": "What places to include in the search"
     },
     "includeHotels": {
       "title": "Include hotels",
@@ -33,14 +31,14 @@
       "default": true
     },
     "checkInDate": {
-      "title": "Check in date (YYYY-MM-DD)",
+      "title": "Hotel check-in date (YYYY-MM-DD)",
       "type": "string",
       "default": "",
       "description": "Hotel rooms prices will be calculated for this date",
       "editor": "textfield"
     },
     "includeAttractions": {
-      "title": "Include things to do [BETA]",
+      "title": "Include things to do",
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
       "default": false
@@ -50,7 +48,9 @@
       "description": "Include review tags",
       "default": false,
       "type": "boolean",
-      "editor": "checkbox"
+      "editor": "checkbox",
+      "sectionCaption": "Reviews"
+
     },
     "includeReviews": {
       "title": "Include reviews",
@@ -466,7 +466,8 @@
         "Yiddish",
         "Yoruba",
         "Zhuang, Chuang"
-      ]
+      ],
+      "sectionCaption": "Language and currency"
     },
     "currency": {
       "title": "Currency",
@@ -607,7 +608,8 @@
       "default": {
         "useApifyProxy": true
       },
-      "editor": "proxy"
+      "editor": "proxy",
+      "sectionCaption": "Proxy and browser configuration"
     },
     "debugLog": {
       "title": "Debug log",
