@@ -3,7 +3,7 @@ const { incrementSavedItems, checkMaxItemsLimit, getConfig } = require('./data-l
 
 const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
-const { findLastReviewIndex } = require('./general');
+const { findLastReviewIndex, getState, setState } = require('./general');
 
 /**
  * @param {{
@@ -12,19 +12,31 @@ const { findLastReviewIndex } = require('./general');
  * }} params
  */
 async function getAttractions({ locationId, session }) {
-    /** @type {any[]} */
-    const attractions = [];
     let offset = 0;
-    const limit = 20;
+    const limit = 200;
+    let attractionsCount = 0;
 
-    while (true) {
+    const { paging: { total_results: totalResults } } = await callForAttractionList({ locationId, session, limit: 1, offset });
+    log.info(`Found ${totalResults} attractions for the location id ${locationId}`);
+
+    const state = getState();
+    let attractions = state[`attractions-${locationId}`] || [];
+
+    let hasReachedLimit = false;
+    while (!hasReachedLimit) {
         log.debug(`Going to process offset ${offset} for attractions ${locationId}`);
-        const data = await callForAttractionList({ locationId, session, limit, offset });
+        const { data, paging: { next } } = await callForAttractionList({ locationId, session, limit, offset });
         offset += limit;
-        attractions.push(...data);
+        attractionsCount += data.length;
 
-        if (data.length < limit || checkMaxItemsLimit(data.length)) break;
+        attractions = [...attractions, ...data];
+        setState({ ...getState(), [`attractions-${locationId}`]: attractions });
+        if (!next || attractionsCount >= Number(totalResults) || checkMaxItemsLimit(attractionsCount)) {
+            hasReachedLimit = true;
+        }
     }
+
+    setState({ ...getState(), [`attractions-${locationId}`]: undefined });
     return attractions;
 }
 

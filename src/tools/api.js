@@ -237,11 +237,21 @@ function buildAttractionsUrl(locationId) {
 
 /**
  * @param {{
- *   locationId: string,
- *   session: Apify.Session,
- *   limit?: number,
- *   offset?: number
+ *  locationId: string,
+ *  session: Apify.Session,
+ *  limit?: number,
+ *  offset?: number
  * }} params
+ * @returns {Promise<{
+ *  data: any[],
+ *  paging: {
+ *   next: string | nu,
+ *   previous: string | null,
+ *   skipped: string,
+ *   results: string,
+ *   total_results: string,
+ *  }
+ * }>}
  */
 async function callForAttractionList({ locationId, session, limit = 10, offset = 0 }) {
     const url = `https://api.tripadvisor.com/api/internal/1.14/location/${locationId}/attractions?limit=${limit}&currency=${global.CURRENCY}&lang=${global.LANGUAGE}${offset ? `&offset=${offset}` : ''}`;
@@ -249,7 +259,7 @@ async function callForAttractionList({ locationId, session, limit = 10, offset =
         url,
         session,
     });
-    return response.body.data;
+    return response.body;
 }
 
 /**
