@@ -8,6 +8,8 @@ const {
     resolveInBatches,
     getRequestListSources,
     getClient,
+    setState,
+    getState,
     randomDelay,
     validateInput,
     proxyConfiguration,
@@ -52,6 +54,15 @@ Apify.main(async () => {
     }
 
     setConfig(input);
+
+    const state = await Apify.getValue('STATE') || {};
+    setState(state);
+
+    Apify.events.on('persistState', async () => {
+        log.debug('Persisting state');
+        const saveState = getState();
+        await Apify.setValue('STATE', saveState);
+    });
 
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = input.includeReviews || false;

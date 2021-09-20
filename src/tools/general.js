@@ -14,6 +14,19 @@ const { getConfig } = require('./data-limits');
 
 const { log, sleep, requestAsBrowser } = Apify.utils;
 
+/** @type {any} */
+let state = {};
+
+/**
+ *
+ * @param {string | {[x: string]: any}} newState
+ */
+const setState = (newState) => {
+    state = newState;
+};
+
+const getState = () => state;
+
 function randomDelay(minimum = 200, maximum = 600) {
     const min = Math.ceil(minimum);
     const max = Math.floor(maximum);
@@ -157,7 +170,7 @@ async function getReviews({ placeId, client, session }) {
     let reviewsCount = 0;
     let reachedLimit = false;
 
-    const reviewsStore = await Apify.openKeyValueStore(`reviews-${placeId}`);
+    let reviews = state[`reviews-${placeId}`] || [];
 
     while (!reachedLimit) {
         const resp = await callForReview({ placeId, session, client, offset, limit });
@@ -167,7 +180,7 @@ async function getReviews({ placeId, client, session }) {
             throw new Error('Failed to get reviews');
         }
 
-        let reviews = data;
+        reviews = [...reviews, ...data];
         const { total_results: totalCount, next } = paging;
 
         const lastIndexByDate = findLastReviewIndexByDate({ reviews, dateKey: 'publishedDate' });
@@ -188,7 +201,9 @@ async function getReviews({ placeId, client, session }) {
         log.info(`Processing ${reviewsCount} of ${totalCount} reviews for placeId ${placeId}`);
 
         offset += limit;
-        await Promise.all(reviews.map((review) => reviewsStore.setValue(`${review.id}`, review)));
+
+        const newState = { ...state, [`reviews-${placeId}`]: reviews };
+        setState(newState);
 
         if (reviews.length < limit) {
             log.info('No more reviews to be returned');
@@ -200,14 +215,8 @@ async function getReviews({ placeId, client, session }) {
             reachedLimit = true;
         }
     }
-
-    /** @type {any[]} */
-    const data = [];
-    await reviewsStore.forEachKey(async (key) => {
-        data.push(await reviewsStore.getValue(key));
-    });
-    await reviewsStore.drop();
-    return data;
+    delete state[`reviews-${placeId}`];
+    return reviews;
 }
 
 /**
@@ -470,6 +479,8 @@ module.exports = {
     validateInput,
     getReviewTags,
     getReviews,
+    setState,
+    getState,
     findLastReviewIndex: findLastReviewIndexByDate,
     proxyConfiguration,
     getLocationId,
