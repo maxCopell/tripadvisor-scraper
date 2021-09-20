@@ -4,6 +4,7 @@ const Apify = require('apify');
 const { ReviewQuery, SearchQuery } = require('./graphql-queries');
 const { API_RESULTS_PER_PAGE } = require('../constants');
 const general = require('./general'); // eslint-disable-line no-unused-vars
+const { getClient } = require('./general');
 
 const { log, requestAsBrowser, sleep } = Apify.utils;
 const { API_KEY, UUID } = process.env;
@@ -76,40 +77,50 @@ async function callForSearch({ query, client }) {
  *
  * @param {{
  *  placeId?: number | string,
+ *  session: Apify.Session,
  *  client: general.Client,
  *  offset?: number,
  *  limit?: number
+ *  lang?: string
+ *  currency?: string
  * }} param0
  * @returns
  */
-async function callForReview({ placeId = 300974, client, offset = 0, limit = 100 }) {
-    const response = await client({
-        url: '/batched',
-        payload: [{
-            variables: {
-                filterCacheKey: `locationReviewFilters_${placeId}`,
-                filters: [
-                    {
-                        axis: 'LANGUAGE',
-                        selections: [
-                            global.LANGUAGE,
-                        ],
-                    },
-                ],
-                initialPrefs: {},
-                keywordVariant: `location_keywords_v2_llr_order_30_${global.LANGUAGE}`,
-                limit,
-                locationId: placeId,
-                needKeywords: false,
-                offset,
-                prefs: null,
-                prefsCacheKey: 'locationReviewPrefs',
-            },
-            query: ReviewQuery,
-        }],
-    });
+async function callForReview({ placeId = 300974, session, client, offset = 0, limit = 100, lang = 'en', currency = 'USD' }) {
+    // const response = await client({
+    //     url: '/batched',
+    //     payload: [{
+    //         variables: {
+    //             filterCacheKey: `locationReviewFilters_${placeId}`,
+    //             filters: [
+    //                 {
+    //                     axis: 'LANGUAGE',
+    //                     selections: [
+    //                         global.LANGUAGE,
+    //                     ],
+    //                 },
+    //             ],
+    //             initialPrefs: {},
+    //             keywordVariant: `location_keywords_v2_llr_order_30_${global.LANGUAGE}`,
+    //             limit,
+    //             locationId: placeId,
+    //             needKeywords: false,
+    //             offset,
+    //             prefs: null,
+    //             prefsCacheKey: 'locationReviewPrefs',
+    //         },
+    //         query: ReviewQuery,
+    //     }],
+    // });
 
-    return response?.[0];
+    // return response?.[0];
+
+    const url = `https://api.tripadvisor.com/api/internal/1.14/location/${placeId}/reviews?limit=${limit}&currency=${currency}&lang=${lang}&offset=${offset}`;
+    const response = await doRequest({
+        url,
+        session,
+    });
+    return response;
 }
 
 /**

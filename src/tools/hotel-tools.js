@@ -29,7 +29,7 @@ async function processHotel({ placeInfo, client, dataset, session }) {
 
     if (global.INCLUDE_REVIEWS) {
         try {
-            reviews = await getReviews({ placeId: id, client });
+            reviews = await getReviews({ placeId: id, client, session });
         } catch (e) {
             log.exception(e, 'Could not get reviews');
             throw e;
@@ -68,8 +68,9 @@ async function processHotel({ placeInfo, client, dataset, session }) {
         webUrl: placeInfo.web_url,
         website: placeInfo.website,
         rankingString: placeInfo.ranking,
-        numberOfReviews: placeInfo.num_reviews,
         rankingDenominator: placeInfo.ranking_denominator,
+        numberOfReviews: placeInfo.num_reviews,
+        reviewsCount: reviews.length,
         reviews,
     };
     if (global.INCLUDE_REVIEW_TAGS) {

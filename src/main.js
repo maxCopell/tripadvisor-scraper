@@ -8,6 +8,8 @@ const {
     resolveInBatches,
     getRequestListSources,
     getClient,
+    setState,
+    getState,
     randomDelay,
     validateInput,
     proxyConfiguration,
@@ -52,6 +54,15 @@ Apify.main(async () => {
     }
 
     setConfig(input);
+
+    const state = await Apify.getValue('STATE') || {};
+    setState(state);
+
+    Apify.events.on('persistState', async () => {
+        log.debug('Persisting state');
+        const saveState = getState();
+        await Apify.setValue('STATE', saveState);
+    });
 
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = input.includeReviews || false;
@@ -135,6 +146,9 @@ Apify.main(async () => {
         },
         handleRequestTimeoutSecs: 180,
         handleRequestFunction: async ({ request, session }) => {
+            if (!session) {
+                throw new Error('session is undefined');
+            }
             log.debug('HANDLING REQUEST');
             if (checkMaxItemsLimit()) {
                 log.debug('REACHED MAX ITEMS LIMIT');
@@ -163,8 +177,9 @@ Apify.main(async () => {
 
                 // eslint-disable-next-line no-nested-ternary
                 const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
+                log.info(`Processing ${API_RESULTS_PER_PAGE} hotels with last data offset: ${maxLimit}`);
 
-                log.info(`Processing hotels with last data offset: ${maxLimit}/${API_RESULTS_PER_PAGE}`);
+                log.debug(`Found ${paging.total_results} hotels`);
                 const promises = [];
                 for (let i = 0; i < maxLimit; i += API_RESULTS_PER_PAGE) {
                     promises.push(() => requestQueue.addRequest({

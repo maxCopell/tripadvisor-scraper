@@ -14,6 +14,19 @@ const { getConfig } = require('./data-limits');
 
 const { log, sleep, requestAsBrowser } = Apify.utils;
 
+/** @type {any} */
+let state = {};
+
+/**
+ *
+ * @param {string | {[x: string]: any}} newState
+ */
+const setState = (newState) => {
+    state = newState;
+};
+
+const getState = () => state;
+
 function randomDelay(minimum = 200, maximum = 600) {
     const min = Math.ceil(minimum);
     const max = Math.floor(maximum);
@@ -147,71 +160,63 @@ function findLastReviewIndexByDate({ reviews, dateKey }) {
  * @param {{
  *   placeId: string,
  *   client: Client,
+ *   session: Apify.Session
  * }} params
  */
-async function getReviews({ placeId, client }) {
-    /** @type {any[]} */
-    const result = [];
+async function getReviews({ placeId, client, session }) {
     let offset = 0;
     const limit = 20;
     const { maxReviews } = getConfig();
+    let reviewsCount = 0;
+    let reachedLimit = false;
 
-    while (true) {
-        const resp = await callForReview({ placeId, client, offset, limit });
-        const { errors } = resp ?? {};
+    let reviews = state[`reviews-${placeId}`] || [];
 
-        if (errors) {
-            log.error('Graphql error', { errors });
+    while (!reachedLimit) {
+        const resp = await callForReview({ placeId, session, client, offset, limit });
+        const { statusCode, body: { data, paging } } = resp ?? {};
+
+        if (statusCode !== 200 || !data) {
+            throw new Error('Failed to get reviews');
         }
 
-        if (!resp?.data?.locations?.length) {
-            throw new Error('Missing locations');
+        reviews = [...reviews, ...data];
+        const { total_results: totalCount, next } = paging;
+
+        const lastIndexByDate = findLastReviewIndexByDate({ reviews, dateKey: 'publishedDate' });
+        if (lastIndexByDate >= 0) {
+            log.info('Getting the last review by date');
+            reviews = reviews.slice(0, lastIndexByDate);
+            reviewsCount -= (lastIndexByDate + 1);
         }
+
+        if (reviewsCount > maxReviews) {
+            log.info('Getting the last review by maxReviews limit');
+            const sliceIndex = reviewsCount - maxReviews;
+            reviews = reviews.splice(0, sliceIndex);
+            reviewsCount -= (sliceIndex + 1);
+        }
+
+        reviewsCount += reviews.length;
+        log.info(`Processing ${reviewsCount} of ${totalCount} reviews for placeId ${placeId}`);
 
         offset += limit;
 
-        const reviewData = resp?.data?.locations[0]?.reviewListPage || {};
+        const newState = { ...state, [`reviews-${placeId}`]: reviews };
+        setState(newState);
 
-        const { totalCount } = reviewData;
-        let { reviews = [] } = reviewData;
-        const lastIndexByDate = findLastReviewIndexByDate({ reviews, dateKey: 'publishedDate' });
-        const lastIndexByReviewsLimit = maxReviews > 0 ? maxReviews : -1;
-        const smallestIndex = getSmallestIndexGreaterThanEqualZero(lastIndexByDate, lastIndexByReviewsLimit);
-        const shouldSlice = smallestIndex >= 0;
-        if (shouldSlice) {
-            reviews = reviews.slice(0, smallestIndex);
+        if (reviews.length < limit) {
+            log.info('No more reviews to be returned');
+            reachedLimit = true;
         }
-
-        const numberOfReviews = (smallestIndex === -1 || totalCount < smallestIndex) ? totalCount : smallestIndex;
-
-        log.info(`Going to process ${numberOfReviews} reviews`);
-        log.debug('params', { smallestIndex, offset, totalCount });
-
-        if (reviews.length >= 1) {
-            reviews.forEach((review) => result.push(processReview(review)));
+        if (maxReviews > 0 && reviewsCount >= maxReviews) {
+            log.debug('', { maxReviews, reviewsCount });
+            log.warning('Reached limit of reviews, further reviews will be discarded');
+            reachedLimit = true;
         }
-
-        if (reviews.length < limit || (maxReviews > 0 && result.length >= maxReviews) || shouldSlice) break;
     }
-
-    return result;
-}
-
-/**
- * @param {number} indexA
- * @param {number} indexB
- */
-function getSmallestIndexGreaterThanEqualZero(indexA, indexB) {
-    if (+indexA >= 0 && +indexB < 0) {
-        return +indexA;
-    }
-    if (+indexB >= 0 && +indexA < 0) {
-        return +indexB;
-    }
-    if (+indexA >= 0 && +indexB >= 0) {
-        return +indexB > +indexA ? +indexB : +indexA;
-    }
-    return -1;
+    delete state[`reviews-${placeId}`];
+    return reviews;
 }
 
 /**
@@ -474,6 +479,8 @@ module.exports = {
     validateInput,
     getReviewTags,
     getReviews,
+    setState,
+    getState,
     findLastReviewIndex: findLastReviewIndexByDate,
     proxyConfiguration,
     getLocationId,

@@ -44,7 +44,7 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
     }
 
     if (global.INCLUDE_REVIEWS) {
-        reviews = await getReviews({ placeId: id, client });
+        reviews = await getReviews({ placeId: id, client, session });
     }
 
     const place = {
@@ -68,9 +68,10 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
         longitude: placeInfo.longitude,
         webUrl: placeInfo.web_url,
         website: placeInfo.website,
-        numberOfReviews: placeInfo.num_reviews,
         rankingDenominator: placeInfo.ranking_denominator,
         rankingString: placeInfo.ranking,
+        numberOfReviews: placeInfo.num_reviews,
+        reviewsCount: reviews.length,
         reviews,
     };
     if (global.INCLUDE_REVIEW_TAGS) {
