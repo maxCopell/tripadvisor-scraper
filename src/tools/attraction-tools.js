@@ -3,7 +3,7 @@ const { incrementSavedItems, checkMaxItemsLimit, getConfig } = require('./data-l
 
 const { utils: { log } } = Apify;
 const { callForAttractionList, callForAttractionReview } = require('./api');
-const { findLastReviewIndex } = require('./general');
+const { findLastReviewIndex, getState, setState } = require('./general');
 
 /**
  * @param {{
@@ -19,7 +19,8 @@ async function getAttractions({ locationId, session }) {
     const { paging: { total_results: totalResults } } = await callForAttractionList({ locationId, session, limit: 1, offset });
     log.info(`Found ${totalResults} attractions for the location id ${locationId}`);
 
-    const attractionsStore = await Apify.openKeyValueStore(`attractions-${locationId}`);
+    const state = getState();
+    let attractions = state[`attractions-${locationId}`] || [];
 
     let hasReachedLimit = false;
     while (!hasReachedLimit) {
@@ -28,16 +29,14 @@ async function getAttractions({ locationId, session }) {
         offset += limit;
         attractionsCount += data.length;
 
-        await Promise.all(data.map((attraction) => attractionsStore.setValue(`${attraction.location_id}`, attraction)));
+        attractions = [...attractions, ...data];
+        setState({ ...getState(), [`attractions-${locationId}`]: attractions });
         if (!next || attractionsCount >= Number(totalResults) || checkMaxItemsLimit(attractionsCount)) {
             hasReachedLimit = true;
         }
     }
 
-    /** @type {any[]} */
-    const attractions = [];
-    await attractionsStore.forEachKey(async (key) => attractions.push(await attractionsStore.getValue(key)));
-    await attractionsStore.drop();
+    setState({ ...getState(), [`attractions-${locationId}`]: undefined });
     return attractions;
 }
 
