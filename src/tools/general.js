@@ -167,7 +167,6 @@ async function getReviews({ placeId, client, session }) {
     let offset = 0;
     const limit = 20;
     const { maxReviews } = getConfig();
-    let reviewsCount = 0;
     let reachedLimit = false;
 
     let reviews = state[`reviews-${placeId}`] || [];
@@ -187,18 +186,15 @@ async function getReviews({ placeId, client, session }) {
         if (lastIndexByDate >= 0) {
             log.info('Getting the last review by date');
             reviews = reviews.slice(0, lastIndexByDate);
-            reviewsCount -= (lastIndexByDate + 1);
         }
 
-        if (reviewsCount > maxReviews) {
+        if (reviews.length > maxReviews) {
             log.info('Getting the last review by maxReviews limit');
-            const sliceIndex = reviewsCount - maxReviews;
+            const sliceIndex = reviews.length - maxReviews;
             reviews = reviews.splice(0, sliceIndex);
-            reviewsCount -= (sliceIndex + 1);
         }
 
-        reviewsCount += reviews.length;
-        log.info(`Processing ${reviewsCount} of ${totalCount} reviews for placeId ${placeId}`);
+        log.info(`Processing ${reviews.length} of ${totalCount} reviews for placeId ${placeId}`);
 
         offset += limit;
 
@@ -209,8 +205,8 @@ async function getReviews({ placeId, client, session }) {
             log.info('No more reviews to be returned');
             reachedLimit = true;
         }
-        if (maxReviews > 0 && reviewsCount >= maxReviews) {
-            log.debug('', { maxReviews, reviewsCount });
+        if (maxReviews > 0 && reviews.length >= maxReviews) {
+            log.debug('', { maxReviews, reviewsCount: reviews.length });
             log.warning('Reached limit of reviews, further reviews will be discarded');
             reachedLimit = true;
         }
