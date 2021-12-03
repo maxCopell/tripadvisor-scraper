@@ -1,6 +1,11 @@
 # 2021-06-29
 
 Features:
+* SDK update to 2.1.0
+
+# 2021-06-29
+
+Features:
 * Retries of internal requests
 * Add `includeTags` to input
 * Pagination

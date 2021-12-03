@@ -4,13 +4,13 @@
 	"description": "Crawl a number of web pages using headless Chrome and Puppeteer",
 	"main": "src/main.js",
 	"dependencies": {
-		"apify": "^1.2.1",
+		"apify": "^2.1.0",
 		"cheerio": "1.0.0-rc.10",
 		"moment": "^2.29.1"
 	},
 	"devDependencies": {
-		"@apify/eslint-config": "^0.1.4",
-		"eslint": "^7.29.0"
+		"@apify/eslint-config": "^0.2.2",
+		"eslint": "^8.3.0"
 	},
 	"scripts": {
 		"start": "node src/main.js",

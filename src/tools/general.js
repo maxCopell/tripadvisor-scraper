@@ -267,7 +267,7 @@ async function getClient(session) {
         const response = await requestAsBrowser({
             url: 'https://www.tripadvisor.com/Hotels-g28953-New_York-Hotels.html',
             proxyUrl,
-            retries: 5,
+            // retries: 15,
         });
 
         const $ = cheerio.load(response.body);
@@ -278,7 +278,7 @@ async function getClient(session) {
     await updateData();
 
     if (!securityToken) {
-        throw new Error('Missing securityToken');
+        throw new Error('Missing securityToken. Retrying...');
     }
 
     // console.log({ securityToken, cookies });
@@ -287,36 +287,42 @@ async function getClient(session) {
      * @param {{
      *  url: string,
      *  method?: 'POST' | 'GET',
-     *  payload?: Record<string, any>
+     *  body?: Record<string, any>
      *  retries?: number
      * }} params
      */
-    return async function req({ url, method = 'POST', payload, retries = 0 }) {
+    return async function req({ url, method = 'POST', body, retries = 0 }) {
         const res = await requestAsBrowser({
             url: `https://www.tripadvisor.com/data/graphql${url}`,
             method,
             headers: {
                 'Content-Type': 'application/json',
-                'x-requested-by': securityToken,
-                Cookie: cookies,
+                // works well without token and cookies
+                // 'x-requested-by': securityToken,
+                // Cookie: cookies,
             },
-            json: true,
+            responseType: 'json',
             // eslint-disable-next-line no-nested-ternary
-            payload: (typeof payload === 'string'
-                ? payload
-                : payload ? JSON.stringify(payload) : undefined),
-            abortFunction: () => false,
+            body: (typeof body === 'string'
+                ? body
+                : body ? JSON.stringify(body) : undefined),
             proxyUrl,
+            // retries: 15,
         });
 
         if (res.statusCode !== 200) {
-            if ((res.statusCode === 403 && retries < 10) || retries < 3) {
+            if ((res.statusCode === 403 && retries < 10) || retries < 5) {
                 await sleep(1000);
                 if (!session?.id) {
                     await updateData();
                 }
                 log.debug('Retrying', { status: res.statusCode, url });
-                return req({ url, method, payload, retries: retries + 1 });
+                return req({
+                    url,
+                    method,
+                    body,
+                    // retries: retries + 1,
+                });
             }
             session?.retire();
             throw new Error(`Status code ${res.statusCode}`);
@@ -455,11 +461,6 @@ const proxyConfiguration = async ({
         if (configuration?.usesApifyProxy) {
             if (blacklist.some((blacklisted) => (configuration.groups || []).includes(blacklisted))) {
                 throw new Error(`\n=======\nThese proxy groups cannot be used in this actor. Choose other group or contact support@apify.com to give you proxy trial:\n\n*  ${blacklist.join('\n*  ')}\n\n=======`);
-            }
-
-            // specific non-automatic proxy groups like RESIDENTIAL, not an error, just a hint
-            if (hint.length && !hint.some((group) => (configuration.groups || []).includes(group))) {
-                Apify.utils.log.info(`\n=======\nYou can pick specific proxy groups for better experience:\n\n*  ${hint.join('\n*  ')}\n\n=======`);
             }
         }
     }
