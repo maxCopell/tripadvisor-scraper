@@ -53,16 +53,12 @@ Apify.main(async () => {
         log.setLevel(log.LEVELS.DEBUG);
     }
 
+    const requestQueue = await Apify.openRequestQueue();
+
     setConfig(input);
 
     const state = await Apify.getValue('STATE') || {};
     setState(state);
-
-    Apify.events.on('persistState', async () => {
-        log.debug('Persisting state');
-        const saveState = getState();
-        await Apify.setValue('STATE', saveState);
-    });
 
     log.debug('Received input', input);
     global.INCLUDE_REVIEWS = input.includeReviews || false;
@@ -81,18 +77,27 @@ Apify.main(async () => {
     const startUrls = [];
     const generalDataset = await Apify.openDataset();
     /** @type {string} */
-    let locationId;
+
+    let locationId = (await Apify.getValue('LOCATION-ID')) || null;
 
     if (locationFullName || locationIdInput) {
         if (locationIdInput) {
             locationId = locationIdInput;
+            startUrls.push(...getRequestListSources({ ...input, locationId }));
+            log.info(`Processing locationId: ${locationId}`);
         } else {
-            locationId = await getLocationId(locationFullName);
+            startUrls.push({
+                url: 'https://www.tripadvisor.com/',
+                userData: { StartLocationId: true },
+            });
         }
-        log.info(`Processing locationId: ${locationId}`);
-
-        startUrls.push(...getRequestListSources({ ...input, locationId }));
     }
+
+    Apify.events.on('persistState', async () => {
+        const saveState = getState();
+        await Apify.setValue('STATE', saveState);
+        await Apify.setValue('LOCATION-ID', locationId);
+    });
 
     if (restaurantId) {
         log.debug(`Processing restaurant ${restaurantId}`);
@@ -112,14 +117,12 @@ Apify.main(async () => {
         });
     }
 
-    const requestQueue = await Apify.openRequestQueue();
     /** @type {Record<string, general.Client>} */
     const sessionClients = {};
     let listenerAdded = false;
     const crawler = new Apify.BasicCrawler({
-        requestList: await Apify.openRequestList('STARTURLS', startUrls),
         requestQueue,
-        minConcurrency: 10,
+        requestList: await Apify.openRequestList('STARTURLS', startUrls),
         maxConcurrency: 20,
         maxRequestRetries: 10,
         useSessionPool: true,
@@ -159,6 +162,20 @@ Apify.main(async () => {
             // await checkIp(); // Proxy check
 
             const { maxItems } = getConfig();
+
+            if (request.userData.StartLocationId) {
+                log.debug('GETTING LOCATION ID');
+                log.debug(`locationFullName: ${locationFullName}`);
+                locationId = await getLocationId(locationFullName);
+
+                log.debug(`locationId: ${locationId}`);
+                const urls = [];
+                urls.push(...getRequestListSources({ ...input, locationId }));
+
+                for (const url of urls) {
+                    await requestQueue.addRequest(url);
+                }
+            }
 
             if (request.userData.initialHotel) {
                 log.debug('INITIAL HOTEL LIST');
@@ -289,19 +306,15 @@ Apify.main(async () => {
                 });
             } else if (request.userData.initialAttraction) {
                 log.debug('ATTRACTIONS');
-                try {
-                    const attractions = await getAttractions({ locationId, session });
-                    log.info(`Scraped ${attractions.length} attractions`);
-                    await resolveInBatches(attractions.map((attr, index) => {
-                        if (checkMaxItemsLimit(index)) return () => {};
-                        return () => processAttraction({
-                            attraction: attr,
-                            session,
-                        });
-                    }), 10);
-                } catch (e) {
-                    log.error(`Could not process attraction... ${e.message}`);
-                }
+                const attractions = await getAttractions({ locationId, session });
+                log.info(`Scraped ${attractions.length} attractions`);
+                await resolveInBatches(attractions.map((attr, index) => {
+                    if (checkMaxItemsLimit(index)) return () => {};
+                    return () => processAttraction({
+                        attraction: attr,
+                        session,
+                    });
+                }), 10);
             }
         },
         handleFailedRequestFunction: async ({ request }) => {

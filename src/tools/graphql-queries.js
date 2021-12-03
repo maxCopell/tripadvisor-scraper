@@ -316,7 +316,6 @@ const SearchQuery = `query TypeaheadQuery($request: Typeahead_RequestInput!) {
     }
   }
 }
-
 fragment TypeAhead_LocationItemFields on Typeahead_LocationItem {
   documentId
   locationId
@@ -324,7 +323,6 @@ fragment TypeAhead_LocationItemFields on Typeahead_LocationItem {
     ...TypeAheadLocationInformationFields
   }
 }
-
 fragment TypeAhead_UserProfileFields on Typeahead_UserProfileItem {
   documentId
   userId
@@ -332,7 +330,6 @@ fragment TypeAhead_UserProfileFields on Typeahead_UserProfileItem {
     ...TypeAheadUserProfileFields
   }
 }
-
 fragment TypeAheadLocationInformationFields on LocationInformation {
   localizedName
   localizedAdditionalNames {
@@ -366,7 +363,6 @@ fragment TypeAheadLocationInformationFields on LocationInformation {
     }
   }
 }
-
 fragment TypeAheadUserProfileFields on MemberProfile {
   username
   displayName
@@ -384,7 +380,6 @@ fragment TypeAheadUserProfileFields on MemberProfile {
     url
   }
 }
-
 fragment TypeAhead_QuerySuggestionFields on Typeahead_QuerySuggestionItem {
   documentId
   text
@@ -398,12 +393,10 @@ fragment TypeAhead_QuerySuggestionFields on Typeahead_QuerySuggestionItem {
     }
   }
 }
-
 fragment TypeAhead_RescueResultFields on Typeahead_RescueResultItem {
   documentId
   text
 }
-
 fragment TypeAhead_ListResultFields on Typeahead_ListResultItem {
   documentId
   locationId

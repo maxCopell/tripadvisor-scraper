@@ -1,3 +1,4 @@
+// @ts-nocheck
 const moment = require('moment');
 const Apify = require('apify');
 
@@ -16,52 +17,32 @@ const { API_KEY, UUID } = process.env;
  * }} param0
  */
 async function callForSearch({ query, client }) {
+    await Apify.setValue('searchQuery', SearchQuery);
     const response = await client({
         url: '/batched',
-        payload: [{
+        body: [{
             query: SearchQuery,
             variables: {
                 request: {
                     query,
-                    limit: 1,
+                    limit: 10,
                     scope: 'WORLDWIDE',
                     locale: 'en-US',
                     scopeGeoId: 1,
                     searchCenter: null,
-                    types: [
-                        'LOCATION',
-                        'QUERY_SUGGESTION',
-                        'LIST_RESULT',
-                    ],
-                    locationTypes: [
-                        'GEO',
-                        'AIRPORT',
-                        'ACCOMMODATION',
-                        'ATTRACTION',
-                        'ATTRACTION_PRODUCT',
-                        'EATERY',
-                        'NEIGHBORHOOD',
-                        'AIRLINE',
-                        'SHOPPING',
-                        'UNIVERSITY',
-                        'GENERAL_HOSPITAL',
-                        'PORT',
-                        'FERRY',
-                        'CORPORATION',
-                        'VACATION_RENTAL',
-                        'SHIP',
-                        'CRUISE_LINE',
-                        'CAR_RENTAL_OFFICE',
-                    ],
+                    types: ['LOCATION', 'QUERY_SUGGESTION', 'USER_PROFILE', 'RESCUE_RESULT'],
+                    locationTypes: ['GEO', 'AIRPORT', 'ACCOMMODATION', 'ATTRACTION', 'ATTRACTION_PRODUCT', 'EATERY', 'NEIGHBORHOOD', 'AIRLINE', 'SHOPPING', 'UNIVERSITY', 'GENERAL_HOSPITAL', 'PORT', 'FERRY', 'CORPORATION', 'VACATION_RENTAL', 'SHIP', 'CRUISE_LINE', 'CAR_RENTAL_OFFICE'],
                     userId: null,
                     context: {
-                        typeaheadId: Date.now(),
+                        searchSessionId: '91CDC537DA7536533B97CF5EEFE80DA41638306855528ssid',
+                        typeaheadId: '1638306877219',
                         uiOrigin: 'SINGLE_SEARCH_HERO',
+                        routeUid: '20b035aa-a83c-4750-ad15-234206bd6c5d'
                     },
-                    articleCategories: [],
-                    enabledFeatures: ['typeahead-q'],
-                },
-            },
+                    articleCategories: ['default', 'love_your_local', 'insurance_lander'],
+                    enabledFeatures: ['typeahead-q']
+                }
+            }
         }],
     });
 
@@ -142,14 +123,12 @@ const doRequest = async ({ url, session, cookie = true, method = 'GET', retries 
         url,
         method,
         useInsecureHttpParser: false,
-        ignoreSslErrors: false,
         headers: {
             'X-TripAdvisor-API-Key': API_KEY,
             // 'X-TripAdvisor-UUID': UUID,
             ...(cookie ? { Cookie: session?.getCookieString(url) } : {}),
         },
-        abortFunction: () => false,
-        json: true,
+        responseType: 'json',
         proxyUrl,
     });
 
