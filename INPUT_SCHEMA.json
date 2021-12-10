@@ -11,6 +11,24 @@
       "prefill": "Prague",
       "editor": "textfield"
     },
+    "locationId": {
+      "title": "Location id",
+      "type": "string",
+      "description": "Id of location. You can use it instead of location name",
+      "editor": "textfield"
+    },
+    "hotelId": {
+      "title": "Hotel id",
+      "type": "string",
+      "description": "Id of hotel",
+      "editor": "textfield"
+    },
+    "restaurantId": {
+      "title": "Restaurant id",
+      "type": "string",
+      "description": "Id of restaurant",
+      "editor": "textfield"
+    },
     "maxItems": {
       "title": "Max search results",
       "type": "integer",
@@ -71,24 +89,6 @@
       "description": "It is a date where the scrapper stops loading older reviews ",
       "default": "",
       "editor": "textfield"
-    },
-    "locationId": {
-      "title": "Location id",
-      "type": "string",
-      "description": "Id of location",
-      "editor": "hidden"
-    },
-    "hotelId": {
-      "title": "Hotel id",
-      "type": "string",
-      "description": "Id of hotel",
-      "editor": "hidden"
-    },
-    "restaurantId": {
-      "title": "Restaurant id",
-      "type": "string",
-      "description": "Id of restaurant",
-      "editor": "hidden"
     },
     "language": {
       "title": "Language",
