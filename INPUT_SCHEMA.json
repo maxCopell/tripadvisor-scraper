@@ -11,36 +11,24 @@
       "prefill": "Prague",
       "editor": "textfield"
     },
-    "locationId": {
-      "title": "Location id",
-      "type": "string",
-      "description": "Id of location. You can use it instead of location name",
-      "editor": "textfield"
-    },
-    "hotelId": {
-      "title": "Hotel id",
-      "type": "string",
-      "description": "Id of hotel",
-      "editor": "textfield"
-    },
-    "restaurantId": {
-      "title": "Restaurant id",
-      "type": "string",
-      "description": "Id of restaurant",
-      "editor": "textfield"
-    },
     "maxItems": {
       "title": "Max search results",
       "type": "integer",
       "description": "Limit the number of places to be scraped. Use '0' to not limit the number of places scraped",
       "default": 0
     },
+    "includeAttractions": {
+      "title": "Include things to do",
+      "type": "boolean",
+      "description": "If checked results includes hotels for given location.",
+      "default": false,
+      "sectionCaption": "What places to include in the search"
+    },
     "includeRestaurants": {
       "title": "Include restaurants",
       "type": "boolean",
       "description": "If checked results includes restaurants for given location.",
-      "default": true,
-      "sectionCaption": "What places to include in the search"
+      "default": true
     },
     "includeHotels": {
       "title": "Include hotels",
@@ -55,11 +43,24 @@
       "description": "Hotel rooms prices will be calculated for this date",
       "editor": "textfield"
     },
-    "includeAttractions": {
-      "title": "Include things to do",
-      "type": "boolean",
-      "description": "If checked results includes hotels for given location.",
-      "default": false
+    "locationId": {
+      "title": "Location id",
+      "type": "string",
+      "description": "Id of location. You can use it instead of location name",
+      "editor": "textfield",
+      "sectionCaption": "Search directly via places Ids"
+    },
+    "hotelId": {
+      "title": "Hotel id",
+      "type": "string",
+      "description": "Id of hotel",
+      "editor": "textfield",
+    },
+    "restaurantId": {
+      "title": "Restaurant id",
+      "type": "string",
+      "description": "Id of restaurant",
+      "editor": "textfield"
     },
     "includeTags": {
       "title": "Include review tags",
@@ -68,7 +69,6 @@
       "type": "boolean",
       "editor": "checkbox",
       "sectionCaption": "Reviews"
-
     },
     "includeReviews": {
       "title": "Include reviews",
