@@ -54,7 +54,7 @@
       "title": "Hotel id",
       "type": "string",
       "description": "Id of hotel",
-      "editor": "textfield",
+      "editor": "textfield"
     },
     "restaurantId": {
       "title": "Restaurant id",
