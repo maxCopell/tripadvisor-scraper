@@ -4,182 +4,145 @@ Get data from TripAdvisor fast and easily. A scraper is now available for restau
 # Input - TripAdvisor Crawler
 You can either enter the location and download the data from the dataset or send a synchronous request to the actor endpoint and crawl all the information about a single place (hotel, restaurant) in 15 seconds.
 
+*You can either use Search term (location), or use specific ids (place, restaurant or hotel id)
+If you use search (I guess primary option) - you can state how many items you want to get (max items), then what content you want to get (attractions, restaurants, hotels - with hotels you can choose a day of check in)
+Alternatively, You can scrape review tags from places, and reviews (where you can set if you want to scrape from specific date and limit their number if you want to. You can choose language and currency.
+
+Example json input: But I guess it will be in the input tab?
+*
+
+```jsonc
+{
+     "locationFullName": "London",
+     "maxItems": 10,
+     "includeRestaurants": true,
+     "includeHotels": true,
+     "checkInDate": "2020-01-01",
+     "includeAttractions": true,
+     "includeTags": true,
+     "includeReviews": true,
+     "maxReviews": 5,
+     "lastReviewDate": "2020-01-01",
+     "locationId": 4571234,
+     "hotelId": 1234567,
+     "restaurantId": 123456,
+     "language": "en",
+     "currency": "USD",
+     "proxyConfiguration": {
+       "useApifyProxy": true
+   },
+     "debugLog": true,
+   }
+```
 # Output - TripAdvisor Export
 You can extract a variety of data about a single place as well as about a complete location, including some of the most essential information, such as `email`, `phone`, `price` and `reviews`. Data can be downloaded in various formats, such as `JSON`, `CSV`, `XML` and others. For more details, see the [Apify Docs](https://www.apify.com/docs).
 
 **Here is an example of `JSON` output:**
+*Output - for hotels - should we have outputs for restaurants and attractions as well? They are all terribly long...*
+
 
 ```json
- {
-    "id": "672866",
-    "type": "HOTEL",
-    "name": "Staybridge Suites London",
-    "awards": [
-        {
-            "year": "2018",
-            "name": "Certificate of Excellence 2018"
-        },
-        {
-            "year": "2017",
-            "name": "Certificate of Excellence 2017"
-        },
-        {
-            "year": "2016",
-            "name": "Certificate of Excellence 2016"
-        },
-        {
-            "year": "2015",
-            "name": "Certificate of Excellence 2015"
-        },
-        {
-            "year": "2014",
-            "name": "Certificate of Excellence 2014"
-        },
-        {
-            "year": "2013",
-            "name": "Certificate of Excellence 2013"
-        },
-        {
-            "year": "2012",
-            "name": "Certificate of Excellence 2012"
-        },
-        {
-            "year": "2011",
-            "name": "Certificate of Excellence 2011"
-        }
-    ],
-    "rankingPosition": "13",
-    "priceLevel": "$$",
-    "category": "hotel",
-    "rating": "4.5",
-    "hotelClass": "3.0",
-    "hotelClassAttribution": "Star rating provided by Expedia.",
-    "phone": "+18778595095",
-    "address": "824 Exeter Rd, London, Ontario N6E 1L5 Canada",
-    "amenities": [
-        "Free Internet",
-        "Free Wifi",
-        "Fitness center",
-        "Kitchenette",
-        "Business Center",
-        "Suites",
-        "Wheelchair access",
-        "Pool",
-        "Internet",
-        "Free Parking",
-        "Pets Allowed",
-        "Wifi",
-        "Public Wifi",
-        "Breakfast included",
-        "Dry Cleaning",
-        "Meeting Rooms",
-        "Non-Smoking Rooms",
-        "Laundry Service",
-        "Air Conditioning",
-        "Family Rooms",
-        "Multilingual Staff",
-        "Self-Serve Laundry",
-        "Accessible rooms",
-        "Microwave",
-        "Refrigerator in room",
-        "Conference Facilities",
-        "Non-Smoking Hotel",
-        "Heated pool",
-        "Flatscreen TV",
-        "Breakfast Buffet",
-        "Indoor pool",
-        "Breakfast Available",
-        "Parking",
-        "Facilities for Disabled Guests",
-        "Housekeeping",
-        "Smoking rooms available",
-        "Baggage Storage",
-        "BBQ Facilities",
-        "Express Check-in / Check-out",
-        "Convenience Store",
-        "English",
-        "Fax / Photocopying",
-        "French",
-        "24-Hour Front Desk",
-        "Newspaper",
-        "Portuguese",
-        "Spanish",
-        "Vending Machine"
-    ],
-    "prices": [
-        {
-            "provider": "Hotels.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=HotelsCom2&src=35062223&geo=672866&from=HotelDateSearch_api&slot=1&matchID=1&oos=0&cnt=10&silo=6036&bucket=852471&nrank=1&crank=1&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=MufysTB-R25wuTfx3jb5nBKviYJMik4Rkw6kpHnuQ1lssYSQXNaaSAcKPQ_fIVZ_Gr992908wb16jIAKuDhBJ5JMR1I_a8sgznmJwmBAAEV9y1OYGebzThfrFWVPjYeVOX2SZ1zMxfxrx-nx_kUv5yi6gizYezJ0G90kZPJtPB8&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=1c26dd999bf8187665f8865c258dfbc6e&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=fc14dd5cfff74011b8d53d05d3d53d62&tp=meta_hac"
-        },
-        {
-            "provider": "Booking.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=BookingCom&src=34398091&geo=672866&from=HotelDateSearch_api&slot=2&matchID=1&oos=0&cnt=10&silo=6208&bucket=892275&nrank=2&crank=2&clt=D&ttype=DesktopMeta&tm=130320066&managed=false&capped=false&gosox=NT-hurSE2i82x52FhPCRQU6U2aqsrjRTAzG_afg1OblqxfYWDcluUREkmAANuKVEBq10W2QlAF86IsUm5hy5MMd7cNuLFdGd_949UCanziFV992IVbALSt7InDMNK5zgRpZvEdKLdU7psgWkvLgLizZNNCkfnD53OKuFJTml7-wYqN88qPEdVXhICcwrX4Kr&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=10b22df0a343c609a8dfb9acb29e9de65&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=d6795eab0388417083b6772ff4620531&tp=meta_hac"
-        },
-        {
-            "provider": "Expedia.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=Expedia&src=32708555&geo=672866&from=HotelDateSearch_api&slot=3&matchID=1&oos=0&cnt=10&silo=5621&bucket=850322&nrank=3&crank=3&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=srVNQGoQ5BIVms7GkGUZCPedkKhFc8YyjH3VCyEhZh9H9SftRoZpDOvz5-yyA3VniAvtxFuMEApijePWGDDCbgXYIq7ExCmIQFa0clDv0WxAR2jh2gX_UohQuJ8c1JLTEEKKgvMwoYZrIS9Pza9yPwdOUaTeO4UbWVj93NlclL8&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=1c7100d0337ef66a191bb1790d92218e2&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=5caf26ac491c463981dbba7832e268b2&tp=meta_hac"
-        },
-        {
-            "provider": "Staybridge.com",
-            "price": "91",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=IHG&src=40794971&geo=672866&from=HotelDateSearch_api&slot=4&matchID=1&oos=0&cnt=10&silo=7269&bucket=902709&nrank=4&crank=4&clt=D&ttype=DesktopMeta&tm=130320066&managed=false&capped=false&gosox=CqirHZ5IRfcZ-qne9IaWbimW_2uruboIcKhN--kLBnVujO-F-H-2PY8yrXnOyMnPRiz9zlsf2fPHOUhIfxRcN8AP1IauKOxABPjbzomB2lFyhnRg0vQPaNRTOpAGJ9rcr2wD3yTNtEC3cve-QQRLDt-UsilRGvSHksAad1nliEvYGFKGw_EdD4mD6lYEBAbt_PPnqGkxZv1uKE8uBXfbDliLAPKF5Xp8riAl5MkmnjY&priceShown=91&hac=AVAILABLE&mbl=BEAT&mbldelta=0&rate=90.59&fees=15.87&cur=USD&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=1170638232be5be29eed412d7d4c3b00e&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=a27f9f4ad41746c1b34a4ae933b20ac0&tp=meta_hac"
-        },
-        {
-            "provider": "Orbitz.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=OrbitzEWS&src=78908133&geo=672866&from=HotelDateSearch_api&slot=5&matchID=1&oos=0&cnt=10&silo=20426&bucket=856023&nrank=6&crank=5&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=WAEnaIm3XZerv1kKXfL_qCzcXtFa7Dtuu-qoyRzx2u300xINNqHuZYD_xw77AmW5WxjCKEOXlngaowYXEp5e290TbwGaDIW8k4o3fhYKkZzcSaTDGPNcBOEy2APvvxauef-99ZsKZ1boi790hr9nFiL-qlR2VVIusPyj-S87vAs&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=106550175937a50b33593670c6196a576&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=b78fd026343249e8b8d1a91f59e359c2&tp=meta_hac"
-        },
-        {
-            "provider": "Agoda.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=Agoda&src=35835215&geo=672866&from=HotelDateSearch_api&slot=6&matchID=1&oos=0&cnt=10&silo=6414&bucket=895084&nrank=5&crank=6&clt=D&ttype=DesktopMeta&tm=130320066&managed=false&capped=false&gosox=sxibuF7CP5CXu_QydqP_TMLAX9W9PleZyIAR9sRE54xu1cpvxeTc1iwwCG6TdyzPYmadIlLKqtDrSK_2glylRNu_MPXBkaHom_QptO2A0IZUHP7LH-jlkqdV_eRe4BP1mO-n9qP6LZe9M6p6CGPS9fV4RMPdMjfnFGLSoRZLE8E&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=15af4cda469bddc8f1caa323ccbc7c15a&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=2be5c060d37249dea37083e2ca9aa7ad&tp=meta_hac"
-        },
-        {
-            "provider": "Travelocity",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=TravelocityEWS&src=53947708&geo=672866&from=HotelDateSearch_api&slot=7&matchID=1&oos=0&cnt=10&silo=11450&bucket=855746&nrank=6&crank=7&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=WAEnaIm3XZerv1kKXfL_qNhNCxbyV5AUGwGE_Xl2rciQ6z9XDBZeVyEKGvyVoglMlxwcz5pqr_279XLNEQRsJp3zl4RIa50HwVPcojmYlYT53ckwz1HuynEq-Pl80yIPVhVTRhEGKT46LPhrpdrYhg&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=1b9b411d1a23e2fe9fb1f159bab99341a&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=955ae9e2778f463787360a8882ad3fdf&tp=meta_hac"
-        },
-        {
-            "provider": "ZenHotels.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=ZenHotels&src=106110254&geo=672866&from=HotelDateSearch_api&slot=8&matchID=1&oos=0&cnt=10&silo=33011&bucket=891571&nrank=8&crank=8&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=A3P1mIdM3dEZOoOzqLbm1c2BsywDRpv3wbvYjI1_vCGfR6xM_-RXamyImBb1WqVcAdxm4CY_LRj6Q1m3XgkZRSOkW0Vr2T2HnHSLIZQsJWz53ckwz1HuynEq-Pl80yIPVhVTRhEGKT46LPhrpdrYhg&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=17feb4523c3dbaeb00193ceaef07e3c03&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=b853c0cf066b4f5aa2ee687f0c69e6c0&tp=meta_hac"
-        },
-        {
-            "provider": "Priceline",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=Priceline&src=38608736&geo=672866&from=HotelDateSearch_api&slot=9&matchID=1&oos=0&cnt=10&silo=17376&bucket=855815&nrank=9&crank=9&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=YyOngmNEqhxZ_JSWu9Ud5bGLteRs47v6-Q5DNcOcO0klblir4t7bOp2OHjylhUWqngJ3menxIfxxMeNyAXAlboTIqbE0mYqhV6ENqX-KtZX53ckwz1HuynEq-Pl80yIPVhVTRhEGKT46LPhrpdrYhg&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=13f14907b1bf1dcd9c57ba1b0143549c5&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=d39ee811bea64984a23cdf8e3eed7b91&tp=meta_hac"
-        },
-        {
-            "provider": "Hotwire.com",
-            "price": "NOT_PROVIDED",
-            "isBookable": false,
-            "link": "https://www.tripadvisor.com/Commerce?p=Hotwire&src=65711793&geo=672866&from=HotelDateSearch_api&slot=10&matchID=1&oos=0&cnt=10&silo=15790&bucket=872448&nrank=9&crank=10&clt=D&ttype=DesktopMeta&tm=130320066&managed=true&capped=false&gosox=YyOngmNEqhxZ_JSWu9Ud5WT8Sb-ZNqlN7bCZQwIXwl0lblir4t7bOp2OHjylhUWqE3OgZg5BfRiKt1FK_O5IwH3LU5gZ5vNOF-sVZU-Nh5U5fZJnXMzF_GvH6fH-RS_nKLqCLNh7MnQb3SRk8m08Hw&hac=INITIALIZED&adults=2&child_rm_ages=&inDay=17&outDay=18&rooms=1&inMonth=2&inYear=2019&outMonth=2&outYear=2019&auid=68d7888d-6b1e-4ece-a0ad-aa926652e9b6&def_d=false&bld=L_1,D_0,G_2,W_7,U_0,C_190217&bh=true&cs=170ce52556dd1d7ca25b459e6f72e89d9&area=QC_META_API&mcid=13091&ik=eb0d81a98f2a4c39955c4f95e71dfed7&drv=-1&dated=true&aok=d36f1bfa7d94482091dfabdac994aa04&tp=meta_hac"
-        }
-    ],
-    "reviews": [
-        {
-            "text": "We traveled to London for a sledge tournament, we had a two bedroom suite for me and 4 children was perfect more then enough space for wheelchair and our equipment, complementary breakfast kids enjoyed very much I loved having the kitchen for all other meals in room \nWas like a mini home, the pool was on the small side but we where only ones using it so worked out well \nWe will be back next year for our 3rd stay ",
-            "title": "Great space ",
-            "rating": 4,
-            "stayDate": "2019-01-31",
-            "publishedDate": "2019-02-09",
-            "userLocation": "Ontario, Canada",
-            "userContributions": 25
-        }
-    ]
+ [
+{
+"id": "23143739",
+"type": "HOTEL",
+"name": "Hotel CUBE Prague",
+"awards": [],
+"rankingPosition": "4",
+"priceLevel": "",
+"category": "hotel",
+"rating": "5.0",
+"hotelClass": "0.0",
+"phone": "011420251019811",
+"address": "Kremencova 18, Prague 11000 Czech Republic",
+"email": "hotelcube@hotelcube.cz",
+"amenities": [],
+"prices": [],
+"latitude": "50.079666",
+"longitude": "14.416768",
+"webUrl": "https://www.tripadvisor.com/Hotel_Review-g274707-d23143739-Reviews-Hotel_CUBE_Prague-Prague_Bohemia.html",
+"website": "http://www.hotelcube.cz/",
+"rankingString": "#4 of 683 hotels in Prague",
+"rankingDenominator": "683",
+"numberOfReviews": "117",
+"reviewsCount": 19,
+"reviews": [
+{
+"id": "821754558",
+"lang": "en",
+"location_id": "23143739",
+"published_date": "2021-12-11T22:36:56-05:00",
+"published_platform": "Mobile",
+"rating": "5",
+"type": "review",
+"helpful_votes": "0",
+"url": "https://www.tripadvisor.com/ShowUserReviews-g274707-d23143739-r821754558-Hotel_CUBE_Prague-Prague_Bohemia.html#review821754558",
+"travel_date": "2021-12",
+"text": "This Hotel is absolutely awesome ❤️ …. we are nothing missing 👍👍👍 …… Breakfast perfect … rooms clean with all you need …. the place is short from all important things in Prague away and only Feeds are needed …. \n\nThe staff are so friendly and helpfully\n\nThank you Pavel (Office manager) for this perfect stay\n\nThis hotel will be our choice during our next stop in Prague … amazing city 👍🙏👍\n\nHana & Klaus",
+"user": {
+"user_id": "645D307D9673E836ACD121B90312255C",
+"type": "user",
+"first_name": null,
+"last_initial": null,
+"name": null,
+"reviewer_type": null,
+"contributions": {
+"reviews": "1",
+"review_city_count": "0",
+"restaurant_reviews": "0",
+"hotel_reviews": "1",
+"attraction_reviews": "0",
+"helpful_votes": "0",
+"photos_count": "0",
+"badges_count": "0"
+},
+"member_id": "0",
+"username": "Trail16898805409",
+"user_location": {
+"name": null,
+"id": null
+},
+"avatar": {
+"small": {
+"url": "https://media-cdn.tripadvisor.com/media/photo-t/1a/f6/e3/6a/default-avatar-2020-47.jpg"
+},
+"large": {
+"url": "https://media-cdn.tripadvisor.com/media/photo-l/1a/f6/e3/6a/default-avatar-2020-47.jpg"
 }
+},
+"link": "https://www.tripadvisor.com/MemberProfile-a_uid.645D307D9673E836ACD121B90312255C",
+"points": "0",
+"created_time": "2021-06-13T09:08:03-0400",
+"locale": "de"
+},
+"title": "no wishes more … perfect and awesome time ❤️🇨🇿❤️",
+"owner_response": null,
+"subratings": [],
+"machine_translated": false,
+"machine_translatable": false
+}
+],
+"reviewTags": [
+{
+"text": "astronomical watch",
+"review_count": 2
+},
+{
+"text": "great location for walking",
+"review_count": 2
+},
+{
+"text": "hotel is spotless",
+"review_count": 2
+},
+{
+"text": "old town",
+"review_count": 5
+}
+]
+}
+]
+
 ```
 
 # How does the TripAdvisor Scraper Work ? 
