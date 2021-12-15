@@ -15,13 +15,14 @@
       "title": "Max search results",
       "type": "integer",
       "description": "Limit the number of places to be scraped. Use '0' to not limit the number of places scraped",
-      "default": 0
+      "default": 0,
+      "prefill": 10
     },
     "includeAttractions": {
       "title": "Include things to do",
       "type": "boolean",
       "description": "If checked results includes hotels for given location.",
-      "default": false,
+      "default": true,
       "sectionCaption": "What places to include in the search"
     },
     "includeRestaurants": {
@@ -48,7 +49,8 @@
       "type": "string",
       "description": "Id of location. You can use it instead of location name",
       "editor": "textfield",
-      "sectionCaption": "Search directly via places Ids"
+      "sectionCaption": "Search directly via places Ids",
+      "sectionDescription": "You can find the Id of the place in its URL after -d. E.g. for https://www.tripadvisor.cz/Hotel_Review-g186338-d1657415-Reviews-Park_Plaza_Westminster_Bridge_London-London_England.html the id would be 1657415."
     },
     "hotelId": {
       "title": "Hotel id",
@@ -98,6 +100,7 @@
       "default": "en",
       "prefill": "en",
       "enum": [
+        "en",
         "ab",
         "aa",
         "af",
@@ -137,7 +140,6 @@
         "da",
         "dv",
         "nl",
-        "en",
         "eo",
         "et",
         "ee",
@@ -283,6 +285,7 @@
         "za"
       ],
       "enumTitles": [
+        "English",
         "Abkhaz",
         "Afar",
         "Afrikaans",
@@ -322,7 +325,6 @@
         "Danish",
         "Divehi; Dhivehi; Maldivian;",
         "Dutch",
-        "English",
         "Esperanto",
         "Estonian",
         "Ewe",
