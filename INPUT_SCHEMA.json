@@ -1,6 +1,6 @@
 {
-  "title": "TripAdvisor API/Scrapper input",
-  "description": "To unleashed the full power of the scrapper/API use the options bellow!",
+  "title": "TripAdvisor API/Scraper input",
+  "description": "To unleash the full power of the scraper/API use the options bellow!",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
