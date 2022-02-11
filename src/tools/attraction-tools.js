@@ -40,7 +40,7 @@ async function getAttractions({ locationId, session }) {
     return attractions;
 }
 
-function processAttractionReview(review) {
+function processAttractionReview(/** @type {any} */ review) {
     const {
         lang,
         text,
@@ -95,7 +95,7 @@ async function getReviewsForAttraction({ locationId, session }) {
             revs = revs.slice(0, lastIndex);
         }
 
-        revs.forEach((review) => reviews.push(processAttractionReview(review)));
+        revs.forEach((/** @type {any} */ review) => reviews.push(processAttractionReview(review)));
 
         if (!revs.length || revs < limit || shouldSlice || reviews.length >= maxReviews) break;
     }
@@ -109,7 +109,11 @@ async function getReviewsForAttraction({ locationId, session }) {
 
 /**
  * @param {{
- *   attraction: unknown,
+ *   attraction: {
+ *      name: string,
+ *      location_id: string,
+ *      reviews: any[],
+ * },
  *   session: Apify.Session,
  * }} params
  */
@@ -117,11 +121,13 @@ async function getAttractionDetail({ attraction, session }) {
     log.info(`Processing detail for ${attraction.name} attraction`);
     const locationId = attraction.location_id;
     let reviews = [];
+
+    // @ts-expect-error
     if (global.INCLUDE_REVIEWS) {
         try {
             reviews = await getReviewsForAttraction({ locationId, session });
             log.info(`Got ${reviews.length} reviews for ${attraction.name}`);
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             log.exception(e, `Could not get reviews for attraction ${attraction.name}`);
         }
     }
@@ -132,7 +138,11 @@ async function getAttractionDetail({ attraction, session }) {
 
 /**
  * @param {{
- *   attraction: unknown,
+ *   attraction: {
+ *      name: string,
+ *      location_id: string,
+ *      reviews: any[],
+ * },
  *   session: Apify.Session,
  * }} params
  */

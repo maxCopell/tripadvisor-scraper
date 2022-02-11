@@ -2,13 +2,12 @@
 const moment = require('moment');
 const Apify = require('apify');
 
-const { ReviewQuery, SearchQuery } = require('./graphql-queries');
+const { SearchQuery } = require('./graphql-queries');
 const { API_RESULTS_PER_PAGE } = require('../constants');
 const general = require('./general'); // eslint-disable-line no-unused-vars
-const { getClient } = require('./general');
 
 const { log, requestAsBrowser, sleep } = Apify.utils;
-const { API_KEY, UUID } = process.env;
+const { API_KEY } = process.env;
 
 /**
  * @param {{
@@ -37,12 +36,12 @@ async function callForSearch({ query, client }) {
                         searchSessionId: '91CDC537DA7536533B97CF5EEFE80DA41638306855528ssid',
                         typeaheadId: '1638306877219',
                         uiOrigin: 'SINGLE_SEARCH_HERO',
-                        routeUid: '20b035aa-a83c-4750-ad15-234206bd6c5d'
+                        routeUid: '20b035aa-a83c-4750-ad15-234206bd6c5d',
                     },
                     articleCategories: ['default', 'love_your_local', 'insurance_lander'],
-                    enabledFeatures: ['typeahead-q']
-                }
-            }
+                    enabledFeatures: ['typeahead-q'],
+                },
+            },
         }],
     });
 
@@ -67,7 +66,7 @@ async function callForSearch({ query, client }) {
  * }} param0
  * @returns
  */
-async function callForReview({ placeId = 300974, session, client, offset = 0, limit = 100, lang = 'en', currency = 'USD' }) {
+async function callForReview({ placeId = 300974, session, offset = 0, limit = 100, lang = 'en', currency = 'USD' }) {
     // const response = await client({
     //     url: '/batched',
     //     payload: [{

@@ -1,3 +1,32 @@
+/**
+ * @typedef RestaurantPlaceInfo
+ * @type {object}
+ * @property {string} location_id
+ * @property {string} name
+ * @property {{ year: string, display_name: string }[] | null} awards
+ * @property {string} ranking_position
+ * @property {string} price_level
+ * @property {string} price_range
+ * @property {string} category
+ * @property {string} rating
+ * @property {string} price
+ * @property {string} ranking_category
+ * @property {string} phone
+ * @property {string} address
+ * @property {string} email
+ * @property {string} latitude
+ * @property {string} longitude
+ * @property {string} web_url
+ * @property {string} website
+ * @property {string} ranking
+ * @property {string} ranking_denominator
+ * @property {string} num_reviews
+ * @property {boolean} is_closed
+ * @property {boolean} is_long_closed
+ * @property {{ name: string }[] | null} cuisine
+ * @property {{ name: string }[] | null} mealTypes
+ */
+
 const Apify = require('apify');
 const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
 
@@ -23,13 +52,17 @@ function getHours(placeInfo) {
         return placeHolder;
     }
 
-    return placeInfo?.hours?.week_ranges?.map((wR) => wR.map((day) => ({ open: day.open_time, close: day.close_time }))) ?? placeHolder;
+    return placeInfo?.hours?.week_ranges?.map(
+        (/** @type {any[]} */ weekRange) => weekRange.map(
+            (day) => ({ open: day.open_time, close: day.close_time }),
+        ),
+    ) ?? placeHolder;
 }
 
 /**
  *
  * @param {{
- *   placeInfo: unknown,
+ *   placeInfo: RestaurantPlaceInfo,
  *   client: general.Client,
  *   dataset?: Apify.Dataset
  *   session: Apify.Session
@@ -43,9 +76,15 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
         return;
     }
 
+    // @ts-expect-error
     if (global.INCLUDE_REVIEWS) {
         reviews = await getReviews({ placeId: id, client, session });
     }
+
+    // @ts-expect-error
+    const reviewTagsWrapper = global.INCLUDE_REVIEW_TAGS
+        ? { reviewTags: await getReviewTags({ locationId: id, session }) }
+        : {};
 
     const place = {
         id: placeInfo.location_id,
@@ -73,10 +112,9 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
         numberOfReviews: placeInfo.num_reviews,
         reviewsCount: reviews.length,
         reviews,
+        ...reviewTagsWrapper,
     };
-    if (global.INCLUDE_REVIEW_TAGS) {
-        place.reviewTags = await getReviewTags({ locationId: id, session });
-    }
+
     log.debug(`Saved data restaurant: ${place.name}`);
 
     if (dataset) {
