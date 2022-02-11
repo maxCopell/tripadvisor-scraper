@@ -21,7 +21,7 @@
     "includeAttractions": {
       "title": "Include things to do",
       "type": "boolean",
-      "description": "If checked results includes hotels for given location.",
+      "description": "If checked results includes attractions/things to do for given location.",
       "default": true,
       "sectionCaption": "What places to include in the search"
     },
