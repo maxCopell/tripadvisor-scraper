@@ -33,11 +33,19 @@ function randomDelay(minimum = 200, maximum = 600) {
     return Apify.utils.sleep(Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
-function getSecurityToken(/** @type {cheerio.Root} */ $) {
+/**
+ *
+ * @param {cheerio.CheerioAPI} $
+ * @returns {string?}
+ */
+function getSecurityToken($) {
     let securityToken = null;
     $('head script').each((_index, element) => {
+        // @ts-expect-error
         if ($(element).get()[0].children[0] && $(element).get()[0].children[0].data.includes("define('page-model', [], function() { return ")) {
+            // @ts-expect-error
             let scriptText = $(element).get()[0].children[0].data;
+
             scriptText = scriptText.replace("define('page-model', [], function() { return ", '');
             scriptText = scriptText.replace('; });', '');
             const scriptObject = JSON.parse(scriptText);
@@ -301,8 +309,10 @@ async function getClient(session) {
             method,
             headers: {
                 'Content-Type': 'application/json',
-                // works well without token and cookies
-                // 'x-requested-by': securityToken,
+                // only the presence of x-requested-by is checked, value is irrelevant
+                'x-requested-by': '',
+                referer: 'https://www.tripadvisor.com/',
+                // works well without cookies
                 // Cookie: cookies,
             },
             responseType: 'json',

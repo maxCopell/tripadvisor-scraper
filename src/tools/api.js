@@ -18,7 +18,7 @@ const { API_KEY } = process.env;
 async function callForSearch({ query, client }) {
     await Apify.setValue('searchQuery', SearchQuery);
     const response = await client({
-        url: '/batched',
+        url: '/ids',
         body: [{
             query: SearchQuery,
             variables: {
@@ -46,9 +46,10 @@ async function callForSearch({ query, client }) {
     });
 
     try {
+        await Apify.setValue('SEARCH_QUERY_RESPONSE', response);
         return response[0].data.Typeahead_autocomplete.results[0].locationId;
     } catch (e) {
-        log.debug('search failed', { e: e.message, data: response[0]?.data, results: response?.[0]?.data?.Typeahead_autocomplete });
+        log.debug('SEARCH FAILED', { e: e.message, data: response[0]?.data, results: response?.[0]?.data?.Typeahead_autocomplete });
         throw new Error(`Nothing found for "${query}"`);
     }
 }
