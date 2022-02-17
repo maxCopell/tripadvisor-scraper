@@ -33,11 +33,19 @@ function randomDelay(minimum = 200, maximum = 600) {
     return Apify.utils.sleep(Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
+/**
+ *
+ * @param {cheerio.CheerioAPI} $
+ * @returns {string?}
+ */
 function getSecurityToken($) {
     let securityToken = null;
-    $('head script').each((index, element) => {
+    $('head script').each((_index, element) => {
+        // @ts-expect-error
         if ($(element).get()[0].children[0] && $(element).get()[0].children[0].data.includes("define('page-model', [], function() { return ")) {
+            // @ts-expect-error
             let scriptText = $(element).get()[0].children[0].data;
+
             scriptText = scriptText.replace("define('page-model', [], function() { return ", '');
             scriptText = scriptText.replace('; });', '');
             const scriptObject = JSON.parse(scriptText);
@@ -47,14 +55,14 @@ function getSecurityToken($) {
     return securityToken;
 }
 
-function getCookies(response) {
-    return (response?.headers?.['set-cookie'] ?? []).map((d) => {
+function getCookies(/** @type {{headers: any } | null} */ response) {
+    return (response?.headers?.['set-cookie'] ?? []).map((/** @type {string} */ d) => {
         const cookie = d.split(';');
 
         if (cookie.includes('TASession') || cookie.includes('TAUD')) {
             return cookie[0];
         }
-    }).filter((s) => s).join('; ');
+    }).filter((/** @type {string[]} */ s) => s).join('; ');
 }
 
 /**
@@ -94,47 +102,47 @@ async function resolveInBatches(promiseArray, batchLength = 10) {
     return results;
 }
 
-const processReview = (review, remoteId) => {
-    const { text, title, rating, tripInfo, publishedDate, userProfile, photos } = review;
-    const stayDate = tripInfo ? tripInfo.stayDate : null;
-    let userLocation = null;
-    let userContributions = null;
-    let userName = null;
-    const imageUrls = [];
+// const processReview = (review, remoteId) => {
+//     const { text, title, rating, tripInfo, publishedDate, userProfile, photos } = review;
+//     const stayDate = tripInfo ? tripInfo.stayDate : null;
+//     let userLocation = null;
+//     let userContributions = null;
+//     let userName = null;
+//     const imageUrls = [];
 
-    log.debug(`Processing review: ${title}`);
-    if (userProfile) {
-        const { hometown, contributionCounts = {}, username } = userProfile;
-        userContributions = contributionCounts?.sumReview;
-        userLocation = hometown.fallbackString;
-        userName = username;
+//     log.debug(`Processing review: ${title}`);
+//     if (userProfile) {
+//         const { hometown, contributionCounts = {}, username } = userProfile;
+//         userContributions = contributionCounts?.sumReview;
+//         userLocation = hometown.fallbackString;
+//         userName = username;
 
-        if (hometown.location) {
-            userLocation = hometown.location.additionalNames.long;
-        }
-    }
+//         if (hometown.location) {
+//             userLocation = hometown.location.additionalNames.long;
+//         }
+//     }
 
-    if (photos && photos.length > 0) {
-        for (const photo of photos) {
-            const { photoSizes } = photo;
-            const photoUrl = photoSizes[photoSizes.length - 1].url;
-            imageUrls.push(photoUrl);
-        }
-    }
+//     if (photos && photos.length > 0) {
+//         for (const photo of photos) {
+//             const { photoSizes } = photo;
+//             const photoUrl = photoSizes[photoSizes.length - 1].url;
+//             imageUrls.push(photoUrl);
+//         }
+//     }
 
-    return {
-        text,
-        title,
-        rating,
-        stayDate,
-        publishedDate,
-        userLocation,
-        userContributions,
-        remoteId,
-        userName,
-        imageUrls,
-    };
-};
+//     return {
+//         text,
+//         title,
+//         rating,
+//         stayDate,
+//         publishedDate,
+//         userLocation,
+//         userContributions,
+//         remoteId,
+//         userName,
+//         imageUrls,
+//     };
+// };
 
 /**
  * @param {{
@@ -150,6 +158,7 @@ function findLastReviewIndexByDate({ reviews, dateKey }) {
         } else {
             rDate = moment(r.publishedDate);
         }
+        // @ts-expect-error
         const userMaxDate = moment(global.LAST_REVIEW_DATE);
         return rDate.isBefore(userMaxDate);
     });
@@ -180,7 +189,7 @@ async function getReviews({ placeId, client, session }) {
         }
 
         reviews = [...reviews, ...data];
-        const { total_results: totalCount, next } = paging;
+        const { total_results: totalCount } = paging;
 
         const lastIndexByDate = findLastReviewIndexByDate({ reviews, dateKey: 'publishedDate' });
         if (lastIndexByDate >= 0) {
@@ -259,9 +268,12 @@ function getRequestListSources({ locationId, includeHotels = true, includeRestau
 async function getClient(session) {
     let securityToken;
     let cookies;
+
+    /** @type {any} */
     let proxyUrl;
 
     const updateData = async (id = session?.id) => {
+        // @ts-expect-error
         proxyUrl = global.PROXY?.newUrl(id ?? `${Math.round(Math.random() * 100000)}`);
 
         const response = await requestAsBrowser({
@@ -281,10 +293,10 @@ async function getClient(session) {
         throw new Error('Missing securityToken. Retrying...');
     }
 
-    // console.log({ securityToken, cookies });
+    log.debug('Security token and cookies', { securityToken, cookies });
 
     /**
-     * @param {{
+     * * @param {{
      *  url: string,
      *  method?: 'POST' | 'GET',
      *  body?: Record<string, any>
@@ -297,8 +309,10 @@ async function getClient(session) {
             method,
             headers: {
                 'Content-Type': 'application/json',
-                // works well without token and cookies
-                // 'x-requested-by': securityToken,
+                // only the presence of x-requested-by is checked, value is irrelevant
+                'x-requested-by': '',
+                referer: 'https://www.tripadvisor.com/',
+                // works well without cookies
                 // Cookie: cookies,
             },
             responseType: 'json',
@@ -348,19 +362,19 @@ function validateInput(input) {
         checkInDate,
         locationId,
     } = input;
-    const getError = (property, type = 'string') => new Error(`${property} should be a ${type}`);
-    const checkStringProperty = (property, propertyName) => {
+    const getError = (/** @type {any} */ property, type = 'string') => new Error(`${property} should be a ${type}`);
+    const checkStringProperty = (/** @type {any} */ property, /** @type {any} */ propertyName) => {
         if (property && typeof property !== 'string') {
             throw getError(propertyName);
         }
     };
-    const checkBooleanProperty = (property, propertyName) => {
+    const checkBooleanProperty = (/** @type {any} */ property, /** @type {any} */ propertyName) => {
         if (property && typeof property !== 'boolean') {
             throw getError(propertyName, 'boolean');
         }
     };
 
-    const checkDateFormat = (date, format = 'YYYY-MM-DD') => {
+    const checkDateFormat = (/** @type {moment.MomentInput | null} */ date, format = 'YYYY-MM-DD') => {
         if (moment(date, format).format(format) !== date) {
             throw new Error(`Date: ${date} should be in format ${format}`);
         }
@@ -437,14 +451,13 @@ async function getReviewTags({ locationId, session }) {
  *    });
  *
  * @param {params} params
- * @returns {Promise<Apify.ProxyConfiguration>}
+ * @returns {Promise<Apify.ProxyConfiguration | undefined>}
  */
 const proxyConfiguration = async ({
     proxyConfig,
     required = true,
     force = Apify.isAtHome(),
     blacklist = ['GOOGLESERP'],
-    hint = [],
 }) => {
     const configuration = await Apify.createProxyConfiguration(proxyConfig);
 

@@ -1,6 +1,6 @@
 /**
  * @typedef Config
- * @type {object}
+ * @type {Record<string, number>}
  * @property {number} maxItems
  * @property {number} maxReviews
  */
