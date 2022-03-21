@@ -20,6 +20,7 @@ const { processHotel } = require('./tools/hotel-tools');
 const { processAttraction, getAttractions } = require('./tools/attraction-tools');
 
 const {
+    doRequest,
     buildRestaurantUrl,
     getPlaceInformation,
     callForRestaurantList,
@@ -75,7 +76,7 @@ Apify.main(async () => {
     global.CURRENCY = input.currency || 'USD';
 
     /** @type {Apify.RequestOptions[]} */
-    const startUrls = [];
+    const startUrls = input?.startUrls || [];
     const generalDataset = await Apify.openDataset();
 
     /** @type {string | { [x: string]: any } | Buffer | null} */
@@ -334,6 +335,16 @@ Apify.main(async () => {
                         session,
                     });
                 }), 10);
+            } else if (request.url.startsWith('https://api.tripadvisor.com/api/internal')) {
+                const response = await doRequest({
+                    url: request.url,
+                    session,
+                });
+
+                await Apify.pushData({
+                    ...request.userData,
+                    ...response.body,
+                });
             }
         },
         handleFailedRequestFunction: async ({ request }) => {

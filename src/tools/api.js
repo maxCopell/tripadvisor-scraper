@@ -329,6 +329,7 @@ async function callForHotelList({ locationId, session, limit = API_RESULTS_PER_P
 }
 
 module.exports = {
+    doRequest,
     callForReview,
     getPlacePrices,
     getPlaceInformation,

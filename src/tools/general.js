@@ -403,10 +403,10 @@ function validateInput(input) {
     }
 
     // Should have all required fields
-    if (!locationFullName && !hotelId && !restaurantId && !locationId) {
+    if (!locationFullName && !hotelId && !restaurantId && !locationId && !input.startUrls) {
         throw new Error('At least one of properties: locationFullName, hotelId, restaurantId, locationId should be set');
     }
-    if (!includeHotels && !includeRestaurants && !includeAttractions) {
+    if (!includeHotels && !includeRestaurants && !includeAttractions && !input.startUrls) {
         throw new Error('At least one of properties: includeHotels or includeRestaurants should be true');
     }
     log.info('Input validation OK');
