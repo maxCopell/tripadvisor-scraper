@@ -338,10 +338,13 @@ Apify.main(async () => {
             } else if (request.url.startsWith('https://api.tripadvisor.com/api/internal')) {
                 const response = await doRequest({
                     url: request.url,
-                    session
+                    session,
                 });
-            
-                await Apify.pushData(response.body)
+
+                await Apify.pushData({
+                    ...request.userData,
+                    ...response.body,
+                });
             }
         },
         handleFailedRequestFunction: async ({ request }) => {
