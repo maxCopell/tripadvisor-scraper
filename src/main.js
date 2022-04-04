@@ -35,7 +35,7 @@ const { utils: { log } } = Apify;
 
 Apify.main(async () => {
     /** @type {any} */
-    const input = await Apify.getValue('INPUT');
+    const input = await Apify.getInput();
     let error = 0;
     validateInput(input);
     const {
