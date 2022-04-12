@@ -1,4 +1,4 @@
-## What does Tripadvisor Scraper do?
+## What can this unofficial Tripadvisor API do?
 This scraper lets you get data from Tripadvisor fast and easily. It's suitable for such use cases as scraping Tripadvisor reviews, emails, addresses, awards, and many more attributes of hotels and restaurants on the Tripadvisor platform.
 
 You can either enter the location and download the data from the dataset or send a synchronous request to the actor endpoint and crawl all the information about a single place (e.g., hotel, restaurant) in 15 seconds.
