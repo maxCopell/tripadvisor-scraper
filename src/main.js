@@ -36,16 +36,8 @@ const { utils: { log } } = Apify;
 Apify.main(async () => {
     /** @type {any} */
     const input = await Apify.getInput();
-
     let error = 0;
     validateInput(input);
-
-    console.log("1st check " + input.maxItems);
-
-    let { maxItems = 0 } = input;
-
-    console.log("2nd check " + maxItems);
-
     const {
         locationFullName,
         locationId: locationIdInput,
@@ -54,18 +46,7 @@ Apify.main(async () => {
         restaurantId,
         checkInDate,
         debugLog = false,
-        paid = false
     } = input;
-
-    if (!paid) {
-        if (maxItems > 100) {
-            log.warning(`You asked for ${maxItems} number of videos but this actor allows only 100.` +
-            `If you want more results use paid version of TikTok scraper, available here: https://apify.com/sauermar/tiktok-scraper`);
-            maxItems = 100;
-        }
-    }
-
-    console.log("3rd check " + maxItems);
 
     if (debugLog) {
         log.setLevel(log.LEVELS.DEBUG);
@@ -185,8 +166,7 @@ Apify.main(async () => {
             const client = sessionClients[session.id] || await getClient(session);
             // await checkIp(); // Proxy check
 
-            //const { maxItems } = getConfig();
-            console.log("4th check " + maxItems)
+            const { maxItems } = getConfig();
 
             if (request.userData.StartLocationId) {
                 log.debug('GETTING LOCATION ID');
@@ -278,8 +258,6 @@ Apify.main(async () => {
                 }
 
                 // eslint-disable-next-line no-nested-ternary
-                console.log("5th check " + maxItems);
-
                 const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
 
                 const buildRequest = async (/** @type {number} */ offset) => {
