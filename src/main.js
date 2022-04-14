@@ -60,7 +60,6 @@ Apify.main(async () => {
         lastReviewDate = '2010-01-01',
         language,
         currency,
-        proxyConfiguration,
         debugLog = false,
         paid = false,
     } = input;
