@@ -57,7 +57,7 @@ Apify.main(async () => {
         includeTags,
         includeReviews,
         maxReviews,
-        lastReviewDate = '2010-01-01',,
+        lastReviewDate = '2010-01-01',
         language,
         currency,
         proxyConfiguration,
