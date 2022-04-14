@@ -38,6 +38,7 @@ Apify.main(async () => {
     const input = await Apify.getInput();
     let error = 0;
     validateInput(input);
+
     const {
         locationFullName,
         locationId: locationIdInput,
@@ -46,7 +47,22 @@ Apify.main(async () => {
         restaurantId,
         checkInDate,
         debugLog = false,
+        paid = false
     } = input;
+
+    if (!paid) {
+        if (input.maxItems > 100) {
+            log.warning(`You asked for ${input.maxItems} number of places but this actor allows only 100. ` +
+            `If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+            input.maxItems = 100;
+        }
+        if (input.includeReviews && input.maxReviews > 20) {
+            log.warning(`You asked for ${input.maxReviews} reviews for each place but this actor allows only 20. ` +
+            `If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+            input.maxReviews = 20;
+        }
+        
+    }
 
     if (debugLog) {
         log.setLevel(log.LEVELS.DEBUG);
