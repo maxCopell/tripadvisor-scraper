@@ -1,0 +1,71 @@
+{
+  "actorSpecification": 1,
+  "name": "tripadvisor-scraper",
+  "title": "Tripadvisor Scraper",
+  "description": "Tripadvisor Tiktok",
+  "version": "0.0.1",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "title": "Tripadvisor Scraper",
+      "description": "Too see all scraped properties, export the whole dataset or select All fields instead of Overview",
+      "views": {
+        "overview": {
+          "title": "Overview",
+          "description": "",
+          "transformation": {
+            "fields": [
+              "type",
+              "name",
+              "rankingPosition",
+              "priceLevel",
+              "category",
+              "rating",
+              "phone",
+              "address",
+              "email",
+              "webUrl",
+              "website",
+              "rankingDenominator",
+              "rankingString",
+              "numberOfReviews"
+            ]
+          },
+          "display": {
+            "component": "table",
+            "columns": [
+              { "label": "Name", "format": "text", "field": "name" },
+              { "label": "Address", "format": "text", "field": "address" },
+              { "label": "Phone", "format": "text", "field": "phone" },
+              { "label": "Email", "format": "text", "field": "email" },
+              {
+                "label": "Price level",
+                "format": "text",
+                "field": "priceLevel"
+              },
+              { "label": "Category", "format": "text", "field": "category" },
+              { "label": "Rating", "format": "number", "field": "rating" },
+              {
+                "label": "Number of reviews",
+                "format": "number",
+                "field": "numberOfReviews"
+              },
+              {
+                "label": "Ranking",
+                "format": "text",
+                "field": "rankingString"
+              },
+              { "label": "Type", "format": "text", "field": "type" },
+              {
+                "label": "Tripadvisor URL",
+                "format": "link",
+                "field": "webUrl"
+              },
+              { "label": "Place URL", "format": "link", "field": "website" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
