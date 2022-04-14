@@ -278,6 +278,8 @@ Apify.main(async () => {
                 }
 
                 // eslint-disable-next-line no-nested-ternary
+                console.log("5th check " + maxItems);
+
                 const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
 
                 const buildRequest = async (/** @type {number} */ offset) => {
