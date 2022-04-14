@@ -48,35 +48,24 @@ Apify.main(async () => {
 
     const {
         locationFullName,
-        includeAttractions,
-        includeRestaurants,
-        includeHotels,
-        checkInDate,
+        locationId: locationIdInput,
+        lastReviewDate = '2010-01-01',
         hotelId,
         restaurantId,
-        includeTags,
-        includeReviews,
-        maxReviews,
-        lastReviewDate = '2010-01-01',
-        language,
-        currency,
+        checkInDate,
         debugLog = false,
-        paid = false,
+        paid = false
     } = input;
 
     if (!paid) {
         if (maxItems > 100) {
-            log.warning(`You asked for ${maxItems} number of videos but this actor allows only 20.` +
+            log.warning(`You asked for ${maxItems} number of videos but this actor allows only 100.` +
             `If you want more results use paid version of TikTok scraper, available here: https://apify.com/sauermar/tiktok-scraper`);
             maxItems = 100;
         }
     }
 
     console.log("3rd check " + maxItems);
-
-
-
-
 
     if (debugLog) {
         log.setLevel(log.LEVELS.DEBUG);
