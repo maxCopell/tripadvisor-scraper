@@ -36,17 +36,48 @@ const { utils: { log } } = Apify;
 Apify.main(async () => {
     /** @type {any} */
     const input = await Apify.getInput();
+
     let error = 0;
     validateInput(input);
+
+    console.log("1st check " + input.maxItems);
+
+    let { maxItems = 0 } = input;
+
+    console.log("2nd check " + maxItems);
+
     const {
         locationFullName,
-        locationId: locationIdInput,
-        lastReviewDate = '2010-01-01',
+        includeAttractions,
+        includeRestaurants,
+        includeHotels,
+        checkInDate,
         hotelId,
         restaurantId,
-        checkInDate,
+        includeTags,
+        includeReviews,
+        maxReviews,
+        lastReviewDate = '2010-01-01',,
+        language,
+        currency,
+        proxyConfiguration,
         debugLog = false,
+        paid = false,
     } = input;
+
+    if (!paid) {
+        if (maxItems > 100) {
+            log.warning(`You asked for ${maxItems} number of videos but this actor allows only 20.` +
+            `If you want more results use paid version of TikTok scraper, available here: https://apify.com/sauermar/tiktok-scraper`);
+            maxItems = 100;
+        }
+    }
+
+    console.log("3rd check " + maxItems);
+
+
+
+
 
     if (debugLog) {
         log.setLevel(log.LEVELS.DEBUG);
