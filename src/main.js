@@ -185,7 +185,8 @@ Apify.main(async () => {
             const client = sessionClients[session.id] || await getClient(session);
             // await checkIp(); // Proxy check
 
-            const { maxItems } = getConfig();
+            //const { maxItems } = getConfig();
+            console.log("4th check " + maxItems)
 
             if (request.userData.StartLocationId) {
                 log.debug('GETTING LOCATION ID');
