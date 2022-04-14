@@ -1,5 +1,8 @@
-## What can this unofficial Tripadvisor API do?
+## What can this unofficial Free Tripadvisor API do?
 This scraper lets you get data from Tripadvisor fast and easily. It's suitable for such use cases as scraping Tripadvisor reviews, emails, addresses, awards, and many more attributes of hotels and restaurants on the Tripadvisor platform.
+
+This free version is limited in number of results, it will provide you with maximum of 100 places for each search. If you want to scrape reviews as well the limit there is 20 reviews per place.
+If you want to scrape more than 100 places and 20 reviews, try our [unlimited Tripadvisor scraper](https://apify.com/maxcopell/tripadvisor).   
 
 You can either enter the location and download the data from the dataset or send a synchronous request to the actor endpoint and crawl all the information about a single place (e.g., hotel, restaurant) in 15 seconds.
 

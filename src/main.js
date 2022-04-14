@@ -52,13 +52,13 @@ Apify.main(async () => {
 
     if (!paid) {
         if (input.maxItems > 100) {
-            log.warning(`You asked for ${input.maxItems} number of places but this actor allows only 100. ` +
-            `If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+            log.warning(`You asked for ${input.maxItems} number of places but this actor allows only 100.`);
+            log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
             input.maxItems = 100;
         }
         if (input.includeReviews && input.maxReviews > 20) {
-            log.warning(`You asked for ${input.maxReviews} reviews for each place but this actor allows only 20. ` +
-            `If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+            log.warning(`You asked for ${input.maxReviews} reviews for each place but this actor allows only 20.`);
+            log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
             input.maxReviews = 20;
         }
         
