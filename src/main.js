@@ -40,14 +40,12 @@ Apify.main(async () => {
     validateInput(input);
 
     const {
+        startUrls = [],
         locationFullName,
-        locationId: locationIdInput,
         lastReviewDate = '2010-01-01',
-        hotelId,
-        restaurantId,
         checkInDate,
         debugLog = false,
-        paid = false
+        paid = false,
     } = input;
 
     if (!paid) {
@@ -61,7 +59,6 @@ Apify.main(async () => {
             log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
             input.maxReviews = 20;
         }
-        
     }
 
     if (debugLog) {
@@ -91,8 +88,6 @@ Apify.main(async () => {
     global.LANGUAGE = input.language || 'en'; // @ts-expect-error
     global.CURRENCY = input.currency || 'USD';
 
-    /** @type {Apify.RequestOptions[]} */
-    const startUrls = input?.startUrls || [];
     const generalDataset = await Apify.openDataset();
 
     /** @type {string | { [x: string]: any } | Buffer | null} */
@@ -102,16 +97,17 @@ Apify.main(async () => {
     let locationId = typeof inputLocationId === 'string' ? inputLocationId : '';
 
     if (locationFullName || locationIdInput) {
+        locationId = locationIdInput;
         if (locationIdInput) {
             locationId = locationIdInput;
-            startUrls.push(...getRequestListSources({ ...input, locationId }));
-            log.info(`Processing locationId: ${locationId}`);
         } else {
-            startUrls.push({
-                url: 'https://www.tripadvisor.com/',
-                userData: { StartLocationId: true },
-            });
+            log.debug('GETTING LOCATION ID');
+            log.debug(`locationFullName: ${locationFullName}`);
+            locationId = await getLocationId(locationFullName);
         }
+
+        startUrls.push(...getRequestListSources({ ...input, locationId }));
+        log.info(`Processing locationId: ${locationId}`);
     }
 
     Apify.events.on('persistState', async () => {
@@ -183,20 +179,6 @@ Apify.main(async () => {
             // await checkIp(); // Proxy check
 
             const { maxItems } = getConfig();
-
-            if (request.userData.StartLocationId) {
-                log.debug('GETTING LOCATION ID');
-                log.debug(`locationFullName: ${locationFullName}`);
-                locationId = await getLocationId(locationFullName);
-
-                log.debug(`locationId: ${locationId}`);
-                const urls = [];
-                urls.push(...getRequestListSources({ ...input, locationId }));
-
-                for (const url of urls) {
-                    await requestQueue.addRequest(url);
-                }
-            }
 
             if (request.userData.initialHotel) {
                 log.debug('INITIAL HOTEL LIST');
