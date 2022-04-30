@@ -6,13 +6,11 @@ const general = require('./tools/general');
 
 const {
     resolveInBatches,
-    getRequestListSources,
     getClient,
     setState,
     getState,
     validateInput,
     proxyConfiguration,
-    getLocationId,
 } = general;
 
 const { processRestaurant } = require('./tools/restaurant-tools');
@@ -30,6 +28,7 @@ const {
 
 const { API_RESULTS_PER_PAGE } = require('./constants');
 const { getConfig, setConfig, checkMaxItemsLimit } = require('./tools/data-limits');
+const { buildStartRequests, buildSearchRequestsFromLocationName } = require('./tools/general');
 
 const { utils: { log } } = Apify;
 
@@ -40,7 +39,6 @@ Apify.main(async () => {
     validateInput(input);
 
     const {
-        startUrls = [],
         locationFullName,
         lastReviewDate = '2010-01-01',
         checkInDate,
@@ -66,6 +64,7 @@ Apify.main(async () => {
     }
 
     const requestQueue = await Apify.openRequestQueue();
+    const startUrls = [];
 
     setConfig(input);
 
@@ -90,49 +89,19 @@ Apify.main(async () => {
 
     const generalDataset = await Apify.openDataset();
 
-    /** @type {string | { [x: string]: any } | Buffer | null} */
-    const inputLocationId = await Apify.getValue('LOCATION-ID');
-
-    /** @type {string} */
-    let locationId = typeof inputLocationId === 'string' ? inputLocationId : '';
-
-    if (locationFullName || locationIdInput) {
-        locationId = locationIdInput;
-        if (locationIdInput) {
-            locationId = locationIdInput;
-        } else {
-            log.debug('GETTING LOCATION ID');
-            log.debug(`locationFullName: ${locationFullName}`);
-            locationId = await getLocationId(locationFullName);
-        }
-
-        startUrls.push(...getRequestListSources({ ...input, locationId }));
-        log.info(`Processing locationId: ${locationId}`);
+    if (locationFullName) {
+        const searchRequests = await buildSearchRequestsFromLocationName(locationFullName, input);
+        startUrls.push(...searchRequests);
     }
 
     Apify.events.on('persistState', async () => {
         const saveState = getState();
         await Apify.setValue('STATE', saveState);
-        await Apify.setValue('LOCATION-ID', locationId);
     });
 
-    if (restaurantId) {
-        log.debug(`Processing restaurant ${restaurantId}`);
-
-        startUrls.push({
-            url: 'https://www.tripadvisor.com',
-            userData: { restaurantId, restaurantDetail: true },
-        });
-    }
-
-    if (hotelId) {
-        log.debug(`Processing hotel ${restaurantId}`);
-
-        startUrls.push({
-            url: 'https://www.tripadvisor.com',
-            userData: { hotelId, hotelDetail: true },
-        });
-    }
+    const startRequests = await buildStartRequests(input);
+    startUrls.push(...startRequests);
+    log.debug(`Start urls: ${JSON.stringify(startUrls, null, 2)}`);
 
     /** @type {Record<string, general.Client>} */
     const sessionClients = {};
@@ -179,6 +148,7 @@ Apify.main(async () => {
             // await checkIp(); // Proxy check
 
             const { maxItems } = getConfig();
+            const { locationId } = request.userData;
 
             if (request.userData.initialHotel) {
                 log.debug('INITIAL HOTEL LIST');
@@ -195,7 +165,6 @@ Apify.main(async () => {
                     throw new Error(`Hotels are empty`);
                 }
 
-                // eslint-disable-next-line no-nested-ternary
                 const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
                 log.info(`Processing ${API_RESULTS_PER_PAGE} hotels with last data offset: ${maxLimit}`);
 
@@ -207,7 +176,7 @@ Apify.main(async () => {
                     requestQueue.addRequest({
                         // @ts-ignore
                         url: getHostelListUrl(locationId, global.CURRENCY, global.LANGUAGE, maxLimit, offset),
-                        userData: { hotelList: true, offset, limit: API_RESULTS_PER_PAGE },
+                        userData: { locationId, hotelList: true, offset, limit: API_RESULTS_PER_PAGE },
                     });
                 };
 
@@ -255,13 +224,12 @@ Apify.main(async () => {
                     throw new Error(`Result length is zero`);
                 }
 
-                // eslint-disable-next-line no-nested-ternary
                 const maxLimit = maxItems === 0 ? paging.total_results : maxItems;
 
                 const buildRequest = async (/** @type {number} */ offset) => {
                     requestQueue.addRequest({
                         url: buildRestaurantUrl(locationId, offset.toString()),
-                        userData: { restaurantList: true, offset, limit: API_RESULTS_PER_PAGE },
+                        userData: { locationId, restaurantList: true, offset, limit: API_RESULTS_PER_PAGE },
                     });
                 };
 
@@ -304,22 +272,24 @@ Apify.main(async () => {
                 // For API usage only gets restaurantId from input and sets OUTPUT.json to key-value store
                 //  a.k.a. returns response with restaurant data
                 log.debug('RESTAURANT DETAIL');
-                const { restaurantId: id } = request.userData;
-                log.info(`Processing single API request for restaurant with id: ${id}`);
+                const { placeId } = request.userData;
+                log.info(`Processing single API request for restaurant with id: ${placeId}`);
                 await processRestaurant({
-                    placeInfo: await getPlaceInformation({ placeId: restaurantId, session }),
+                    placeInfo: await getPlaceInformation({ placeId, session }),
                     client,
+                    dataset: generalDataset,
                     session,
                 });
             } else if (request.userData.hotelDetail) {
                 // For API usage only gets hotelId from input and sets OUTPUT.json to key-value store
                 //  a.k.a. returns response with hotel data
                 log.debug('HOTEL DETAIL');
-                const { hotelId: id } = request.userData;
-                log.info(`Processing single API request for hotel with id: ${id}`);
+                const { placeId } = request.userData;
+                log.info(`Processing single API request for hotel with id: ${placeId}`);
                 await processHotel({
-                    placeInfo: await getPlaceInformation({ placeId: hotelId, session }),
+                    placeInfo: await getPlaceInformation({ placeId, session }),
                     client,
+                    dataset: generalDataset,
                     session,
                 });
             } else if (request.userData.initialAttraction) {
@@ -351,7 +321,8 @@ Apify.main(async () => {
             error += 1;
         },
     });
-    // Run the crawler and wait for it to finish.
+
+    log.info('Starting the crawler...');
     await crawler.run();
     log.info(`Requests failed: ${error}`);
 
