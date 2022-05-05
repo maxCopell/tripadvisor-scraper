@@ -17,13 +17,15 @@ const { API_KEY } = process.env;
  */
 async function callForSearch({ query, client }) {
     await Apify.setValue('searchQuery', SearchQuery);
+    const encodedQuery = encodeURIComponent(query);
+
     const response = await client({
         url: '/ids',
         body: [{
             query: SearchQuery,
             variables: {
                 request: {
-                    query,
+                    query: encodedQuery,
                     limit: 10,
                     scope: 'WORLDWIDE',
                     locale: 'en-US',
