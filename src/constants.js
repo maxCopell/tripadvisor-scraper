@@ -14,8 +14,14 @@ const ID_REGEX = /-d([\d]+)/gi;
  */
 const SEARCH_QUERY_REGEX = /\?q=([^&]+)&/gi;
 
+const FREE_ACTOR_LIMITS = {
+    MAX_ITEMS: 100,
+    MAX_REVIEWS: 20,
+};
+
 module.exports = {
     API_RESULTS_PER_PAGE,
     ID_REGEX,
     SEARCH_QUERY_REGEX,
+    FREE_ACTOR_LIMITS,
 };
