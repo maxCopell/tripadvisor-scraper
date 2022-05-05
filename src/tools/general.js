@@ -234,7 +234,9 @@ async function buildStartRequests(input) {
     /** @type {Apify.RequestOptions[]} */
     const requests = [];
 
-    for (const { url } of input.startUrls) {
+    const { startUrls = [] } = input;
+
+    for (const { url } of startUrls) {
         const lowercaseUrl = url.toLowerCase();
 
         if (lowercaseUrl.includes('search?q=')) {
