@@ -47,9 +47,18 @@ async function callForSearch({ query, client }) {
         }],
     });
 
+    const { results } = response[0].data.Typeahead_autocomplete;
+
+    let locationId;
+    for (let i = 0; i < results.length; i++) {
+        if (!locationId && results[i].locationId) {
+            locationId = results[i].locationId;
+        }
+    }
+
     try {
         await Apify.setValue('SEARCH_QUERY_RESPONSE', response);
-        return response[0].data.Typeahead_autocomplete.results[0].locationId;
+        return locationId;
     } catch (e) {
         log.debug('SEARCH FAILED', { e: e.message, data: response[0]?.data, results: response?.[0]?.data?.Typeahead_autocomplete });
         throw new Error(`Nothing found for "${query}"`);
