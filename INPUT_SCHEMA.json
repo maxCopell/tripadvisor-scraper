@@ -1,6 +1,6 @@
 {
   "title": "TripAdvisor API/Scraper input",
-  "description": "To unleash the full power of the scraper/API use the options bellow!",
+  "description": "This free Tripadvisor scraper will get you the results you want in limited quantity. You will get maximum of 100 places for each search and 20 reviews if you want to scrape them too. Do you need to scrape more? Use our unlimited tripadvisor scraper here: https://apify.com/maxcopell/tripadvisor.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
