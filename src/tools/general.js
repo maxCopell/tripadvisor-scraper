@@ -1,6 +1,7 @@
 const Apify = require('apify');
 const cheerio = require('cheerio');
 const moment = require('moment');
+const { ID_REGEX, SEARCH_QUERY_REGEX, FREE_ACTOR_LIMITS } = require('../constants');
 
 const {
     callForReview,
@@ -225,31 +226,122 @@ async function getReviews({ placeId, client, session }) {
 }
 
 /**
+ *
+ * @param {any} input
+ * @returns
+ */
+async function buildStartRequests(input) {
+    /** @type {Apify.RequestOptions[]} */
+    const requests = [];
+
+    const { startUrls = [] } = input;
+
+    for (const { url } of startUrls) {
+        const lowercaseUrl = url.toLowerCase();
+
+        if (lowercaseUrl.includes('search?q=')) {
+            const searchRequests = await buildSearchRequestsFromUrl(url, input);
+            requests.push(...searchRequests);
+        } else {
+            const detailRequests = buildDetailRequestsFromUrl(url);
+            requests.push(...detailRequests);
+        }
+    }
+
+    return requests;
+}
+
+/**
+ *
+ * @param {string} url
+ * @returns
+ */
+function buildDetailRequestsFromUrl(url) {
+    const requests = [];
+
+    const idMatches = new RegExp(ID_REGEX).exec(url);
+    if (idMatches) {
+        const placeId = idMatches[1];
+        const lowercaseUrl = url.toLowerCase();
+
+        if (lowercaseUrl.includes('restaurant_review')) {
+            requests.push({
+                url,
+                userData: { placeId, restaurantDetail: true },
+            });
+        } else if (lowercaseUrl.includes('hotel_review')) {
+            requests.push({
+                url,
+                userData: { placeId, hotelDetail: true },
+            });
+        }
+    }
+
+    return requests;
+}
+
+/**
+ *
+ * @param {string} searchUrl
+ * @param {any} input
+ * @returns
+ */
+async function buildSearchRequestsFromUrl(searchUrl, input) {
+    const requests = [];
+
+    const searchQueryMatches = new RegExp(SEARCH_QUERY_REGEX).exec(searchUrl);
+    if (searchQueryMatches) {
+        const locationFullName = decodeURIComponent(searchQueryMatches[1]);
+        const searchRequests = await buildSearchRequestsFromLocationName(locationFullName, input);
+        requests.push(...searchRequests);
+    }
+
+    return requests;
+}
+
+/**
+ *
+ * @param {string} locationFullName
+ * @param {any} input
+ * @returns
+ */
+async function buildSearchRequestsFromLocationName(locationFullName, input) {
+    const requests = [];
+
+    log.debug(`Fetching locationId for location: ${locationFullName}`);
+    const locationId = await getLocationId(locationFullName);
+    log.info(`Fetched locationId: ${locationId} for location: ${locationFullName}`);
+
+    requests.push(...getRequestListSources({ ...input, locationId }));
+
+    return requests;
+}
+
+/**
  * @param {any} param0
  */
 function getRequestListSources({ locationId, includeHotels = true, includeRestaurants = true, includeAttractions = false }) {
     const sources = [];
+
     if (includeHotels) {
         sources.push({
             url: buildHotelUrl(locationId),
-            userData: { initialHotel: true },
+            userData: { locationId, initialHotel: true },
         });
     }
     if (includeRestaurants) {
         sources.push({
             url: buildRestaurantUrl(locationId),
-            userData: { initialRestaurant: true },
+            userData: { locationId, initialRestaurant: true },
         });
     }
     if (includeAttractions) {
         sources.push({
             url: buildAttractionsUrl(locationId),
-            userData: {
-                initialAttraction: true,
-            },
+            userData: { locationId, initialAttraction: true },
         });
     }
-    console.log(sources);
+
     return sources;
 }
 
@@ -413,6 +505,25 @@ function validateInput(input) {
 }
 
 /**
+ * Sets input.maxItems and input.maxReviews to free actor's limit.
+ * @param {{ maxItems: number, maxReviews: number, includeReviews: boolean }} input
+ */
+function setFreeActorRestrictions(input) {
+    const { MAX_ITEMS, MAX_REVIEWS } = FREE_ACTOR_LIMITS;
+
+    if (input.maxItems > MAX_ITEMS) {
+        log.warning(`You asked for ${input.maxItems} number of places but this actor allows only 100.`);
+        log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+        input.maxItems = MAX_ITEMS;
+    }
+    if (input.includeReviews && input.maxReviews > MAX_REVIEWS) {
+        log.warning(`You asked for ${input.maxReviews} reviews for each place but this actor allows only 20.`);
+        log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
+        input.maxReviews = MAX_REVIEWS;
+    }
+}
+
+/**
  * @param {{
  *   locationId: string,
  *   session: Apify.Session
@@ -484,9 +595,12 @@ const proxyConfiguration = async ({
 module.exports = {
     resolveInBatches,
     getRequestListSources,
+    buildStartRequests,
+    buildSearchRequestsFromLocationName,
     getClient,
     randomDelay,
     validateInput,
+    setFreeActorRestrictions,
     getReviewTags,
     getReviews,
     setState,

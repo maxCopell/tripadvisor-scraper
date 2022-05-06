@@ -17,13 +17,15 @@ const { API_KEY } = process.env;
  */
 async function callForSearch({ query, client }) {
     await Apify.setValue('searchQuery', SearchQuery);
+    const encodedQuery = encodeURIComponent(query);
+
     const response = await client({
         url: '/ids',
         body: [{
             query: SearchQuery,
             variables: {
                 request: {
-                    query,
+                    query: encodedQuery,
                     limit: 10,
                     scope: 'WORLDWIDE',
                     locale: 'en-US',
@@ -194,12 +196,14 @@ async function getPlacePrices({ placeId, delay, session }) {
 async function getPlaceInformation({ placeId, session }) {
     const url = `https://api.tripadvisor.com/api/internal/1.14/location/${placeId}?currency=${global.CURRENCY}&lang=${global.LANGUAGE}`;
 
+    log.debug(`Getting place information`, { url });
+
     const response = await doRequest({
         url,
         session,
     });
 
-    return response.body.data;
+    return response.body;
 }
 
 function buildRestaurantUrl(locationId, offset) {

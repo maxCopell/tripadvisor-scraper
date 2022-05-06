@@ -45,6 +45,10 @@ const { incrementSavedItems, checkMaxItemsLimit } = require('./data-limits');
  * @returns
  */
 async function processHotel({ placeInfo, client, dataset, session }) {
+    if (!placeInfo) {
+        return;
+    }
+
     const { location_id: id } = placeInfo;
     let reviews = [];
 
@@ -65,10 +69,6 @@ async function processHotel({ placeInfo, client, dataset, session }) {
             log.exception(e, 'Could not get reviews');
             throw e;
         }
-    }
-
-    if (!placeInfo) {
-        return;
     }
 
     const prices = placePrices?.offers?.map((offer) => ({
