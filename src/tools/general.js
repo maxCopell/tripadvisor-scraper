@@ -504,24 +504,6 @@ function validateInput(input) {
     log.info('Input validation OK');
 }
 
-/**
- * Sets input.maxItems and input.maxReviews to free actor's limit.
- * @param {{ maxItems: number, maxReviews: number, includeReviews: boolean }} input
- */
-function setFreeActorRestrictions(input) {
-    const { MAX_ITEMS, MAX_REVIEWS } = FREE_ACTOR_LIMITS;
-
-    if (input.maxItems > MAX_ITEMS) {
-        log.warning(`You asked for ${input.maxItems} number of places but this actor allows only 100.`);
-        log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
-        input.maxItems = MAX_ITEMS;
-    }
-    if (input.includeReviews && input.maxReviews > MAX_REVIEWS) {
-        log.warning(`You asked for ${input.maxReviews} reviews for each place but this actor allows only 20.`);
-        log.warning(`If you want more results use paid version of Tripadvisor scraper, available here: https://apify.com/maxcopell/tripadvisor`);
-        input.maxReviews = MAX_REVIEWS;
-    }
-}
 
 /**
  * @param {{
@@ -600,7 +582,6 @@ module.exports = {
     getClient,
     randomDelay,
     validateInput,
-    setFreeActorRestrictions,
     getReviewTags,
     getReviews,
     setState,

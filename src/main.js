@@ -13,7 +13,7 @@ const {
 } = general;
 
 const { setConfig, checkMaxItemsLimit } = require('./tools/data-limits');
-const { buildStartRequests, buildSearchRequestsFromLocationName, setFreeActorRestrictions } = require('./tools/general');
+const { buildStartRequests, buildSearchRequestsFromLocationName } = require('./tools/general');
 const { handleInitialHotel, handleHotelList, handleInitialRestaurant, handleRestaurantList, handleRestaurantDetail, handleHotelDetail, handleInitialAttraction, handleInternalApiPage } = require('./tools/routes');
 
 const { utils: { log } } = Apify;
@@ -26,16 +26,11 @@ Apify.main(async () => {
         locationFullName,
         lastReviewDate = '2010-01-01',
         checkInDate,
-        debugLog = false,
-        paid = false,
+        debugLog = false
     } = input;
 
     if (debugLog) {
         log.setLevel(log.LEVELS.DEBUG);
-    }
-
-    if (!paid) {
-        setFreeActorRestrictions(input);
     }
 
     validateInput(input);
