@@ -19,9 +19,12 @@ const FREE_ACTOR_LIMITS = {
     MAX_REVIEWS: 20,
 };
 
+const REVIEWS_LIMIT = 20;
+
 module.exports = {
     API_RESULTS_PER_PAGE,
     ID_REGEX,
     SEARCH_QUERY_REGEX,
     FREE_ACTOR_LIMITS,
+    REVIEWS_LIMIT,
 };

@@ -26,7 +26,7 @@ Apify.main(async () => {
         locationFullName,
         lastReviewDate = '2010-01-01',
         checkInDate,
-        debugLog = false
+        debugLog = false,
     } = input;
 
     if (debugLog) {

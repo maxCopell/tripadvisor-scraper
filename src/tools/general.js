@@ -1,7 +1,7 @@
 const Apify = require('apify');
 const cheerio = require('cheerio');
 const moment = require('moment');
-const { ID_REGEX, SEARCH_QUERY_REGEX, FREE_ACTOR_LIMITS } = require('../constants');
+const { ID_REGEX, SEARCH_QUERY_REGEX, REVIEWS_LIMIT } = require('../constants');
 
 const {
     callForReview,
@@ -175,8 +175,13 @@ function findLastReviewIndexByDate({ reviews, dateKey }) {
  */
 async function getReviews({ placeId, client, session }) {
     let offset = 0;
-    const limit = 20;
+    const limit = REVIEWS_LIMIT;
+
     const { maxReviews } = getConfig();
+
+    // maxReviews = 0 represents unlimited reviews
+    const maxReviewsSet = maxReviews > 0;
+
     let reachedLimit = false;
 
     let reviews = state[`reviews-${placeId}`] || [];
@@ -198,10 +203,9 @@ async function getReviews({ placeId, client, session }) {
             reviews = reviews.slice(0, lastIndexByDate);
         }
 
-        if (reviews.length > maxReviews) {
+        if (maxReviewsSet && reviews.length > maxReviews) {
             log.info('Getting the last review by maxReviews limit');
-            const sliceIndex = reviews.length - maxReviews;
-            reviews = reviews.splice(0, sliceIndex);
+            reviews = reviews.slice(0, maxReviews);
         }
 
         log.info(`Processing ${reviews.length} of ${totalCount} reviews for placeId ${placeId}`);
@@ -211,11 +215,11 @@ async function getReviews({ placeId, client, session }) {
         const newState = { ...state, [`reviews-${placeId}`]: reviews };
         setState(newState);
 
-        if (reviews.length < limit) {
+        if (reviews.length < offset) {
             log.info('No more reviews to be returned');
             reachedLimit = true;
         }
-        if (maxReviews > 0 && reviews.length >= maxReviews) {
+        if (maxReviewsSet && reviews.length >= maxReviews) {
             log.debug('', { maxReviews, reviewsCount: reviews.length });
             log.warning('Reached limit of reviews, further reviews will be discarded');
             reachedLimit = true;
