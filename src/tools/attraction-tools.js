@@ -13,7 +13,7 @@ const { findLastReviewIndex, getState, setState } = require('./general');
  */
 async function getAttractions({ locationId, session }) {
     let offset = 0;
-    const limit = 200;
+    const limit = 50;
     let attractionsCount = 0;
 
     const { paging: { total_results: totalResults } } = await callForAttractionList({ locationId, session, limit: 1, offset });
