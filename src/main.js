@@ -60,19 +60,46 @@ Apify.main(async () => {
 
     const dataset = await Apify.openDataset();
 
-    if (locationFullName) {
-        const searchRequests = await buildSearchRequestsFromLocationName(locationFullName, input);
-        startUrls.push(...searchRequests);
-    }
+    // retries by logic, since we getting security token outside of crawler
+    // and if token fails with error unhandled exception will lead to actor fail instantly
+    let requestRetries;
+    const maxRequestRetries = 10;
+    requestRetries = maxRequestRetries;
+    do {
+        requestRetries--;
+        try {
+            if (locationFullName) {
+                const searchRequests = await buildSearchRequestsFromLocationName(locationFullName, input);
+                startUrls.push(...searchRequests);
+            }
+            requestRetries = 0;
+        } catch (err) {
+            if (!requestRetries) {
+                throw new Error('Search request can not be created');
+            }
+        }
+    } while (requestRetries > 0);
+
+    requestRetries = maxRequestRetries;
+    do {
+        requestRetries--;
+        try {
+            const startRequests = await buildStartRequests(input);
+            startUrls.push(...startRequests);
+            requestRetries = 0;
+        } catch (err) {
+            if (!requestRetries) {
+                throw new Error('Start requests can not be created');
+            }
+        }
+    } while (requestRetries > 0);
+
+    log.debug(`Start urls: ${JSON.stringify(startUrls, null, 2)}`);
 
     Apify.events.on('persistState', async () => {
         const saveState = getState();
         await Apify.setValue('STATE', saveState);
     });
-
-    const startRequests = await buildStartRequests(input);
-    startUrls.push(...startRequests);
-    log.debug(`Start urls: ${JSON.stringify(startUrls, null, 2)}`);
 
     /** @type {Record<string, general.Client>} */
     const sessionClients = {};
@@ -82,7 +109,7 @@ Apify.main(async () => {
         requestQueue,
         requestList: await Apify.openRequestList('STARTURLS', startUrls),
         maxConcurrency: 20,
-        maxRequestRetries: 10,
+        maxRequestRetries,
         useSessionPool: true,
         sessionPoolOptions: {
             maxPoolSize: 40,
