@@ -263,10 +263,11 @@ async function buildStartRequests(input) {
 function buildDetailRequestsFromUrl(url) {
     const requests = [];
 
+    // matching direct URL to place of interest
     const idMatches = new RegExp(ID_REGEX).exec(url);
+    const lowercaseUrl = url.toLowerCase();
     if (idMatches) {
         const placeId = idMatches[1];
-        const lowercaseUrl = url.toLowerCase();
 
         if (lowercaseUrl.includes('restaurant_review')) {
             requests.push({
@@ -278,6 +279,21 @@ function buildDetailRequestsFromUrl(url) {
                 url,
                 userData: { placeId, hotelDetail: true },
             });
+        }
+    } else {
+        // try to resolve URL as category per location, for example
+        // https://www.tripadvisor.com/Restaurants-g562645-Alcobendas.html
+        const geoIdFromUrl = lowercaseUrl.split('-g')?.pop()?.split('-')?.shift();
+        if (!geoIdFromUrl || !parseInt(geoIdFromUrl, 10)) {
+            log.warning(`[SKIPPED]: Place or location IDs not found for ${lowercaseUrl}`);
+        } else {
+            log.info(`Fetched locationId: ${geoIdFromUrl} for URL: ${url}`);
+            requests.push(...getRequestListSources({
+                locationId: geoIdFromUrl,
+                includeRestaurants: lowercaseUrl.includes('/restaurants-'),
+                includeAttractions: lowercaseUrl.includes('/attractions-'),
+                includeHotels: lowercaseUrl.includes('/hotels-'),
+            }));
         }
     }
 
@@ -507,7 +523,6 @@ function validateInput(input) {
     }
     log.info('Input validation OK');
 }
-
 
 /**
  * @param {{
