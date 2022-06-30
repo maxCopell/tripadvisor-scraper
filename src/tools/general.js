@@ -247,7 +247,7 @@ async function buildStartRequests(input) {
             const searchRequests = await buildSearchRequestsFromUrl(url, input);
             requests.push(...searchRequests);
         } else {
-            const detailRequests = buildDetailRequestsFromUrl(url);
+            const detailRequests = buildDetailRequestsFromUrl(url, input);
             requests.push(...detailRequests);
         }
     }
@@ -258,9 +258,10 @@ async function buildStartRequests(input) {
 /**
  *
  * @param {string} url
+ * @param {any} input
  * @returns
  */
-function buildDetailRequestsFromUrl(url) {
+function buildDetailRequestsFromUrl(url, input) {
     const requests = [];
 
     // matching direct URL to place of interest
@@ -290,9 +291,10 @@ function buildDetailRequestsFromUrl(url) {
             log.info(`Fetched locationId: ${geoIdFromUrl} for URL: ${url}`);
             requests.push(...getRequestListSources({
                 locationId: geoIdFromUrl,
-                includeRestaurants: lowercaseUrl.includes('/restaurants-'),
-                includeAttractions: lowercaseUrl.includes('/attractions-'),
-                includeHotels: lowercaseUrl.includes('/hotels-'),
+                // include details as specified in input or as place type in URL
+                includeRestaurants: input.includeRestaurants || lowercaseUrl.includes('/restaurants-'),
+                includeAttractions: input.includeAttractions || lowercaseUrl.includes('/attractions-'),
+                includeHotels: input.includeHotels || lowercaseUrl.includes('/hotels-'),
             }));
         }
     }
