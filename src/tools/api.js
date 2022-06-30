@@ -17,31 +17,37 @@ const { API_KEY } = process.env;
  */
 async function callForSearch({ query, client }) {
     await Apify.setValue('searchQuery', SearchQuery);
-    const encodedQuery = encodeURIComponent(query);
 
+    /*
+    Request URL: https://www.tripadvisor.com/data/graphql/ids
+    recheck payload and apply changes if-when web app changed
+    */
     const response = await client({
         url: '/ids',
         body: [{
             query: SearchQuery,
             variables: {
                 request: {
-                    query: encodedQuery,
+                    articleCategories: ['default', 'love_your_local', 'insurance_lander'],
+                    context: {
+                        // routeUid: "ec683e6d-44b5-44d8-b751-d3cede9ca687"
+                        routeUid: '20b035aa-a83c-4750-ad15-234206bd6c5d',
+                        // searchSessionId: "AE87485AB9DD5CC0BFEA889BAD3D1C341656546822423ssid"
+                        searchSessionId: '91CDC537DA7536533B97CF5EEFE80DA41638306855528ssid',
+                        // typeaheadId: "1656546853560"
+                        typeaheadId: '1638306877219',
+                        uiOrigin: 'SINGLE_SEARCH_HERO',
+                    },
+                    enabledFeatures: ['typeahead-q'],
                     limit: 10,
-                    scope: 'WORLDWIDE',
                     locale: 'en-US',
+                    locationTypes: ['GEO', 'AIRPORT', 'ACCOMMODATION', 'ATTRACTION', 'ATTRACTION_PRODUCT', 'EATERY', 'NEIGHBORHOOD', 'AIRLINE', 'SHOPPING', 'UNIVERSITY', 'GENERAL_HOSPITAL', 'PORT', 'FERRY', 'CORPORATION', 'VACATION_RENTAL', 'SHIP', 'CRUISE_LINE', 'CAR_RENTAL_OFFICE'],
+                    query, // DO NOT encodeURIComponent - otherwise it will return broken output
+                    scope: 'WORLDWIDE',
                     scopeGeoId: 1,
                     searchCenter: null,
                     types: ['LOCATION', 'QUERY_SUGGESTION', 'USER_PROFILE', 'RESCUE_RESULT'],
-                    locationTypes: ['GEO', 'AIRPORT', 'ACCOMMODATION', 'ATTRACTION', 'ATTRACTION_PRODUCT', 'EATERY', 'NEIGHBORHOOD', 'AIRLINE', 'SHOPPING', 'UNIVERSITY', 'GENERAL_HOSPITAL', 'PORT', 'FERRY', 'CORPORATION', 'VACATION_RENTAL', 'SHIP', 'CRUISE_LINE', 'CAR_RENTAL_OFFICE'],
                     userId: null,
-                    context: {
-                        searchSessionId: '91CDC537DA7536533B97CF5EEFE80DA41638306855528ssid',
-                        typeaheadId: '1638306877219',
-                        uiOrigin: 'SINGLE_SEARCH_HERO',
-                        routeUid: '20b035aa-a83c-4750-ad15-234206bd6c5d',
-                    },
-                    articleCategories: ['default', 'love_your_local', 'insurance_lander'],
-                    enabledFeatures: ['typeahead-q'],
                 },
             },
         }],
@@ -50,10 +56,18 @@ async function callForSearch({ query, client }) {
     const { results } = response[0].data.Typeahead_autocomplete;
 
     let locationId;
+    let location = {};
     for (let i = 0; i < results.length; i++) {
         if (!locationId && results[i].locationId) {
+            location = results[i];
             locationId = results[i].locationId;
         }
+    }
+
+    // eslint-disable-next-line no-underscore-dangle
+    const isGeo = location?.details?.isGeo;
+    if (!isGeo) {
+        log.warning(`Try wider search, current one limited because ${locationId} IS ${location?.details?.placeType}, NOT geolocation`);
     }
 
     try {
