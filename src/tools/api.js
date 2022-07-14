@@ -71,7 +71,7 @@ async function callForSearch({ query, client }) {
         // "url": "/Attraction_Review-g188112-d10180843-Reviews-Marktgasse-Winterthur.html",
         // IMPORTANT! HOTELS_URL, ATTRACTIONS_URL, RESTAURANTS_URL leads to 404 error
         // proof: "HOTELS_URL": "/Hotels?geo=10180843",
-        const geoId = location?.details?.url?.split('-g')?.pop()?.split('=')?.shift();
+        const geoId = location?.details?.url?.split('-g')?.pop()?.split('-')?.shift();
         if (geoId && parseInt(geoId, 10)) {
             locationId = parseInt(geoId, 10);
             log.info(`Resolved GeoId ${geoId} from location`, location);
