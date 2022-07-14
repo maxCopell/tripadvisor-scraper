@@ -67,7 +67,22 @@ async function callForSearch({ query, client }) {
     // eslint-disable-next-line no-underscore-dangle
     const isGeo = location?.details?.isGeo;
     if (!isGeo) {
-        log.warning(`Try wider search, current one limited because ${locationId} IS ${location?.details?.placeType}, NOT geolocation`);
+        // for non-geo locations we expecting at least one of the following links with ?geo= parameter
+        const geoLinks = [location?.HOTELS_URL, location?.ATTRACTIONS_URL, location?.RESTAURANTS_URL];
+        /*
+            "url": "/Attraction_Review-g188112-d10180843-Reviews-Marktgasse-Winterthur.html",
+            "HOTELS_URL": "/Hotels?geo=10180843",
+            "ATTRACTIONS_URL": "/Attractions?geo=10180843",
+            "RESTAURANTS_URL": "/Restaurants?geo=10180843",
+            "placeType": "ATTRACTION",
+        */
+        const geoId = geoLinks.find((x) => x.includes('geo='))?.split('geo=')?.[1];
+        if (geoId && parseInt(geoId, 10)) {
+            locationId = parseInt(geoId, 10);
+            log.info(`Resolved GeoId ${geoId} from location`, location);
+        } else {
+            log.warning(`Try wider search, current one limited because ${locationId} IS ${location?.details?.placeType}, NOT geolocation`);
+        }
     }
 
     try {
