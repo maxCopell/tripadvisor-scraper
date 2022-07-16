@@ -67,7 +67,17 @@ async function callForSearch({ query, client }) {
     // eslint-disable-next-line no-underscore-dangle
     const isGeo = location?.details?.isGeo;
     if (!isGeo) {
-        log.warning(`Try wider search, current one limited because ${locationId} IS ${location?.details?.placeType}, NOT geolocation`);
+        // for non-geo locations we expecting location from url
+        // "url": "/Attraction_Review-g188112-d10180843-Reviews-Marktgasse-Winterthur.html",
+        // IMPORTANT! HOTELS_URL, ATTRACTIONS_URL, RESTAURANTS_URL leads to 404 error
+        // proof: "HOTELS_URL": "/Hotels?geo=10180843",
+        const geoId = location?.details?.url?.split('-g')?.pop()?.split('-')?.shift();
+        if (geoId && parseInt(geoId, 10)) {
+            locationId = parseInt(geoId, 10);
+            log.info(`Resolved GeoId ${geoId} from location`, location);
+        } else {
+            log.warning(`Try wider search, current one limited because ${locationId} IS ${location?.details?.placeType}, NOT geolocation`);
+        }
     }
 
     try {
