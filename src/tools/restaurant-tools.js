@@ -25,6 +25,7 @@
  * @property {boolean} is_long_closed
  * @property {{ name: string }[] | null} cuisine
  * @property {{ name: string }[] | null} mealTypes
+ * @property {{ name: string }[] | null} dietary_restrictions
  */
 
 const Apify = require('apify');
@@ -102,6 +103,7 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
         email: placeInfo.email,
         cuisine: placeInfo.cuisine?.map((cuisine) => cuisine.name) ?? [],
         mealTypes: placeInfo.mealTypes?.map((m) => m.name) ?? [],
+        dietaryRestrictions: placeInfo.dietary_restrictions?.map((x) => x.name) ?? [],
         hours: getHours(placeInfo),
         latitude: placeInfo.latitude,
         longitude: placeInfo.longitude,

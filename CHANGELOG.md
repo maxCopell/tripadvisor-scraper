@@ -1,3 +1,8 @@
+# 2022-07-26
+
+Features:
+* Add `dietaryRestrictions` to output;
+
 # 2021-12-10
 
 Bug fix:
