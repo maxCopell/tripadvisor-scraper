@@ -97,7 +97,9 @@ async function getReviewsForAttraction({ locationId, session }) {
 
         revs.forEach((/** @type {any} */ review) => reviews.push(processAttractionReview(review)));
 
-        if (!revs.length || revs < limit || shouldSlice || reviews.length >= maxReviews) break;
+        if (!revs.length || revs < limit || shouldSlice || reviews.length >= maxReviews) {
+            break;
+        }
     }
 
     if (reviews.length > maxReviews) {
@@ -113,6 +115,7 @@ async function getReviewsForAttraction({ locationId, session }) {
  *      name: string,
  *      location_id: string,
  *      reviews: any[],
+ *      photo: { images: { original: { url: string } } }
  * },
  *   session: Apify.Session,
  * }} params
@@ -132,8 +135,12 @@ async function getAttractionDetail({ attraction, session }) {
         }
     }
 
-    attraction.reviews = reviews;
-    return { type: 'ATTRACTION', ...attraction };
+    return {
+        type: 'ATTRACTION',
+        image: attraction.photo.images.original.url,
+        ...attraction,
+        reviews,
+    };
 }
 
 /**
@@ -142,6 +149,7 @@ async function getAttractionDetail({ attraction, session }) {
  *      name: string,
  *      location_id: string,
  *      reviews: any[],
+ *      photo: { images: { original: { url: string } } }
  * },
  *   session: Apify.Session,
  * }} params
