@@ -3,6 +3,7 @@
  * @type {object}
  * @property {string} location_id
  * @property {string} name
+ * @property {{ images: { original: { url: string } } }} photo
  * @property {{ year: string, display_name: string }[] | null} awards
  * @property {string} ranking_position
  * @property {string} price_level
@@ -90,6 +91,7 @@ async function processRestaurant({ placeInfo, client, dataset, session }) {
         id: placeInfo.location_id,
         type: 'RESTAURANT',
         name: placeInfo.name,
+        image: placeInfo.photo.images.original.url,
         awards: placeInfo.awards?.map((award) => ({ year: award.year, name: award.display_name })) ?? [],
         rankingPosition: placeInfo.ranking_position,
         priceLevel: placeInfo.price_level,

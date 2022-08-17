@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "tripadvisor-scraper",
   "title": "Tripadvisor Scraper",
-  "description": "Tripadvisor Tiktok",
+  "description": "Tripadvisor Scraper",
   "version": "0.0.1",
   "storages": {
     "dataset": {
@@ -17,6 +17,7 @@
             "fields": [
               "type",
               "name",
+              "image",
               "rankingPosition",
               "priceLevel",
               "category",
@@ -34,17 +35,46 @@
           "display": {
             "component": "table",
             "columns": [
-              { "label": "Name", "format": "text", "field": "name" },
-              { "label": "Address", "format": "text", "field": "address" },
-              { "label": "Phone", "format": "text", "field": "phone" },
-              { "label": "Email", "format": "text", "field": "email" },
+              {
+                "label": "Image",
+                "format": "image",
+                "field": "image"
+              },
+              {
+                "label": "Name",
+                "format": "text",
+                "field": "name"
+              },
+              {
+                "label": "Address",
+                "format": "text",
+                "field": "address"
+              },
+              {
+                "label": "Phone",
+                "format": "text",
+                "field": "phone"
+              },
+              {
+                "label": "Email",
+                "format": "text",
+                "field": "email"
+              },
               {
                 "label": "Price level",
                 "format": "text",
                 "field": "priceLevel"
               },
-              { "label": "Category", "format": "text", "field": "category" },
-              { "label": "Rating", "format": "number", "field": "rating" },
+              {
+                "label": "Category",
+                "format": "text",
+                "field": "category"
+              },
+              {
+                "label": "Rating",
+                "format": "number",
+                "field": "rating"
+              },
               {
                 "label": "Number of reviews",
                 "format": "number",
@@ -55,13 +85,21 @@
                 "format": "text",
                 "field": "rankingString"
               },
-              { "label": "Type", "format": "text", "field": "type" },
+              {
+                "label": "Type",
+                "format": "text",
+                "field": "type"
+              },
               {
                 "label": "Tripadvisor URL",
                 "format": "link",
                 "field": "webUrl"
               },
-              { "label": "Place URL", "format": "link", "field": "website" }
+              {
+                "label": "Place URL",
+                "format": "link",
+                "field": "website"
+              }
             ]
           }
         }
